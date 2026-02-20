@@ -1,36 +1,78 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Le Paiper Admin 📦
 
-## Getting Started
+Painel administrativo premium para a papelaria **Le Paiper** — construído com Next.js 16, Tailwind CSS v4 e Framer Motion.
 
-First, run the development server:
+## ✨ Features
+
+| Tela | Descrição |
+|------|-----------|
+| **Dashboard** | KPIs de vendas, receita e alertas de estoque baixo |
+| **Inventário** | CRUD de produtos com categorias, cores e níveis de estoque |
+| **PDV** | Ponto de venda com carrinho, busca e múltiplos métodos de pagamento |
+| **Clientes** | Gestão de clientes com tiers de fidelidade (Bronze/Prata/Ouro) |
+| **Relatórios** | Gráficos de receita, vendas por categoria, métodos de pagamento e top produtos |
+| **Configurações** | Perfil, dados da loja, notificações, aparência e segurança |
+| **Login** | Tela de autenticação com glassmorphism e animações |
+
+### Extras
+- 🌙 **Dark Mode** — toggle com persistência e detecção do sistema
+- 🔔 **Notificações** — dropdown animado com badge de contagem
+- 🍞 **Toasts** — feedback visual em 4 variantes (success/error/warning/info)
+- 💀 **Skeletons** — loading states durante transições de rota
+- 🚫 **404** — página customizada com animações
+
+## 🛠 Tech Stack
+
+- **Framework**: [Next.js 16](https://nextjs.org/) (App Router + Turbopack)
+- **Styling**: [Tailwind CSS v4](https://tailwindcss.com/) + CSS Variables semânticas
+- **Animações**: [Framer Motion](https://www.framer.com/motion/)
+- **Charts**: [Recharts](https://recharts.org/)
+- **Components**: Radix UI primitives
+- **Icons**: [Lucide React](https://lucide.dev/)
+
+## 🚀 Getting Started
 
 ```bash
+# Instalar dependências
+npm install
+
+# Rodar em desenvolvimento
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+
+# Build de produção
+npm run build
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Acesse [http://localhost:3000](http://localhost:3000) após `npm run dev`.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 📁 Estrutura
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```
+src/
+├── app/
+│   ├── page.tsx              # Dashboard
+│   ├── inventario/page.tsx   # Inventário
+│   ├── pdv/page.tsx          # Ponto de Venda
+│   ├── clientes/page.tsx     # Clientes
+│   ├── relatorios/page.tsx   # Relatórios
+│   ├── configuracoes/page.tsx # Configurações
+│   ├── login/page.tsx        # Login
+│   ├── not-found.tsx         # 404
+│   ├── loading.tsx           # Loading skeleton
+│   ├── layout.tsx            # Root layout
+│   └── globals.css           # Design tokens
+├── components/
+│   ├── layout/
+│   │   ├── sidebar.tsx       # Navegação lateral
+│   │   ├── header.tsx        # Topbar com breadcrumb
+│   │   └── dashboard-layout.tsx
+│   ├── ui/                   # Componentes base (Button, Card, Input, etc.)
+│   ├── theme-provider.tsx    # Dark mode context
+│   └── theme-toggle.tsx      # Toggle animado
+└── lib/
+    └── cn.ts                 # Utility classnames
+```
 
-## Learn More
+## 📝 License
 
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+MIT

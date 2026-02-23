@@ -43,3 +43,35 @@ export async function updateSettings(entries: { key: string; value: string }[]) 
     }
     revalidatePath("/configuracoes");
 }
+
+/* ─── Change Password ─── */
+const changePasswordSchema = z.object({
+    currentPassword: z.string().min(1, "Senha atual é obrigatória"),
+    newPassword: z.string().min(8, "A nova senha deve ter no mínimo 8 caracteres"),
+    confirmPassword: z.string().min(1, "Confirmação é obrigatória"),
+}).refine((d) => d.newPassword === d.confirmPassword, {
+    message: "As senhas não coincidem",
+    path: ["confirmPassword"],
+});
+
+export async function changePassword(currentPassword: string, newPassword: string, confirmPassword: string) {
+    const session = await requireAdmin();
+    const validated = changePasswordSchema.parse({ currentPassword, newPassword, confirmPassword });
+
+    const { compare, hash } = await import("bcryptjs");
+
+    const user = await db.user.findUnique({ where: { id: session.user?.id ?? "" } });
+    if (!user) throw new Error("Usuário não encontrado");
+
+    const isValid = await compare(validated.currentPassword, user.password);
+    if (!isValid) throw new Error("Senha atual incorreta");
+
+    const hashedPassword = await hash(validated.newPassword, 12);
+    await db.user.update({
+        where: { id: user.id },
+        data: { password: hashedPassword },
+    });
+
+    revalidatePath("/configuracoes");
+    return { success: true };
+}

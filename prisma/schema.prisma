@@ -45,7 +45,9 @@ model Client {
 model Sale {
   id            String     @id @default(cuid())
   clientId      String?
-  client        Client?    @relation(fields: [clientId], references: [id])
+  client        Client?    @relation(fields: [clientId], references: [id], onDelete: SetNull)
+  clientName    String?
+  clientDeleted Boolean    @default(false)
   total         Float
   paymentMethod String
   items         SaleItem[]
@@ -53,13 +55,15 @@ model Sale {
 }
 
 model SaleItem {
-  id        String  @id @default(cuid())
-  saleId    String
-  sale      Sale    @relation(fields: [saleId], references: [id], onDelete: Cascade)
-  productId String
-  product   Product @relation(fields: [productId], references: [id])
-  quantity  Int
-  price     Float
+  id             String   @id @default(cuid())
+  saleId         String
+  sale           Sale     @relation(fields: [saleId], references: [id], onDelete: Cascade)
+  productId      String?
+  product        Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
+  productName    String?
+  productDeleted Boolean  @default(false)
+  quantity       Int
+  price          Float
 }
 
 model Setting {

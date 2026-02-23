@@ -17,7 +17,9 @@ export async function getReportsData(days = 30) {
     const sales = await db.sale.findMany({
         where: { createdAt: { gte: startDate } },
         include: {
-            items: { include: { product: { select: { name: true, category: true, cost: true } } } },
+            items: {
+                include: { product: { select: { name: true, category: true, cost: true } } },
+            },
         },
         orderBy: { createdAt: "asc" },
     });
@@ -29,7 +31,7 @@ export async function getReportsData(days = 30) {
         if (!revenueByDay[day]) revenueByDay[day] = { revenue: 0, cost: 0 };
         revenueByDay[day].revenue += sale.total;
         for (const item of sale.items) {
-            revenueByDay[day].cost += item.product.cost * item.quantity;
+            revenueByDay[day].cost += (item.product?.cost ?? 0) * item.quantity;
         }
     }
 
@@ -43,7 +45,7 @@ export async function getReportsData(days = 30) {
     const categoryMap: Record<string, number> = {};
     for (const sale of sales) {
         for (const item of sale.items) {
-            const cat = item.product.category;
+            const cat = item.product?.category ?? "Produto excluído";
             categoryMap[cat] = (categoryMap[cat] || 0) + item.quantity;
         }
     }
@@ -65,7 +67,7 @@ export async function getReportsData(days = 30) {
     const productMap: Record<string, { name: string; quantity: number; revenue: number }> = {};
     for (const sale of sales) {
         for (const item of sale.items) {
-            const key = item.product.name;
+            const key = item.product?.name ?? item.productName ?? "Produto excluído";
             if (!productMap[key]) productMap[key] = { name: key, quantity: 0, revenue: 0 };
             productMap[key].quantity += item.quantity;
             productMap[key].revenue += item.price * item.quantity;

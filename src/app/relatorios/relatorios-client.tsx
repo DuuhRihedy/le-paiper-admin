@@ -73,7 +73,7 @@ export function RelatoriosClient({ data }: { data: ReportsData }) {
 
     return (
         <div className="space-y-8">
-            <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="flex items-center justify-between">
+            <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                     <h1 className="text-2xl font-semibold tracking-tight text-brand-purple sm:text-3xl">Relatórios</h1>
                     <p className="mt-1 text-sm text-foreground/50">Análise de desempenho dos últimos 30 dias</p>
@@ -136,9 +136,9 @@ export function RelatoriosClient({ data }: { data: ReportsData }) {
                                                 <stop offset="95%" stopColor="#8B5CF6" stopOpacity={0} />
                                             </linearGradient>
                                         </defs>
-                                        <XAxis dataKey="date" tick={{ fontSize: 11 }} tickFormatter={(v) => v.slice(5)} />
-                                        <YAxis tick={{ fontSize: 11 }} tickFormatter={(v) => `R$${v}`} />
-                                        <Tooltip formatter={(v) => formatCurrency(Number(v))} labelFormatter={(l) => `Data: ${l}`} />
+                                        <XAxis dataKey="date" tick={{ fontSize: 11, fill: 'var(--foreground)' }} tickFormatter={(v) => v.slice(5)} />
+                                        <YAxis tick={{ fontSize: 11, fill: 'var(--foreground)' }} tickFormatter={(v) => `R$${v}`} />
+                                        <Tooltip contentStyle={{ backgroundColor: 'var(--surface-elevated)', border: '1px solid var(--border)', borderRadius: '12px', color: 'var(--foreground)' }} formatter={(v) => formatCurrency(Number(v))} labelFormatter={(l) => `Data: ${l}`} />
                                         <Area type="monotone" dataKey="revenue" stroke="#8B5CF6" fill="url(#colorRevenue)" strokeWidth={2} name="Receita" />
                                     </AreaChart>
                                 </ResponsiveContainer>
@@ -162,9 +162,9 @@ export function RelatoriosClient({ data }: { data: ReportsData }) {
                             <div className="h-64">
                                 <ResponsiveContainer width="100%" height="100%">
                                     <BarChart data={data.salesByCategory}>
-                                        <XAxis dataKey="category" tick={{ fontSize: 11 }} />
-                                        <YAxis tick={{ fontSize: 11 }} />
-                                        <Tooltip />
+                                        <XAxis dataKey="category" tick={{ fontSize: 11, fill: 'var(--foreground)' }} />
+                                        <YAxis tick={{ fontSize: 11, fill: 'var(--foreground)' }} tickFormatter={(v) => `${v} un.`} />
+                                        <Tooltip contentStyle={{ backgroundColor: 'var(--surface-elevated)', border: '1px solid var(--border)', borderRadius: '12px', color: 'var(--foreground)' }} />
                                         <Bar dataKey="count" name="Vendas" radius={[8, 8, 0, 0]}>
                                             {data.salesByCategory.map((_, i) => (
                                                 <Cell key={i} fill={COLORS[i % COLORS.length]} />
@@ -187,8 +187,8 @@ export function RelatoriosClient({ data }: { data: ReportsData }) {
                             <CardTitle>Métodos de Pagamento</CardTitle>
                         </CardHeader>
                         <CardContent>
-                            <div className="flex h-64 items-center justify-center gap-8">
-                                <ResponsiveContainer width="50%" height="100%">
+                            <div className="flex h-64 flex-col items-center justify-center gap-4 sm:flex-row sm:gap-8">
+                                <ResponsiveContainer width="100%" height={160} className="sm:!w-1/2 sm:!h-full">
                                     <PieChart>
                                         <Pie
                                             data={data.paymentMethods}
@@ -202,7 +202,7 @@ export function RelatoriosClient({ data }: { data: ReportsData }) {
                                                 <Cell key={i} fill={COLORS[i % COLORS.length]} />
                                             ))}
                                         </Pie>
-                                        <Tooltip formatter={(v, name) => [v, PAYMENT_LABELS[String(name)] || name]} />
+                                        <Tooltip contentStyle={{ backgroundColor: 'var(--surface-elevated)', border: '1px solid var(--border)', borderRadius: '12px', color: 'var(--foreground)' }} formatter={(v, name) => [v, PAYMENT_LABELS[String(name)] || name]} />
                                     </PieChart>
                                 </ResponsiveContainer>
                                 <div className="space-y-3">

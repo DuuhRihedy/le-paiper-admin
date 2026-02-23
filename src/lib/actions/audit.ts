@@ -33,8 +33,9 @@ export async function getAuditLogs(limit = 50) {
     const session = await auth();
     if (!session?.user) return [];
 
+    const safeLimit = z.number().int().positive().max(200).parse(limit);
     return db.auditLog.findMany({
-        take: limit,
+        take: safeLimit,
         orderBy: { createdAt: "desc" },
         include: { user: { select: { name: true, email: true } } },
     });

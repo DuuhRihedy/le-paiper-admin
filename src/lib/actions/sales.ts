@@ -47,12 +47,30 @@ export async function createSale(data: {
         }
 
         // Create sale with items
+        const productNames = new Map<string, string>();
+        for (const item of validated.items) {
+            const p = await tx.product.findUnique({ where: { id: item.productId }, select: { name: true } });
+            if (p) productNames.set(item.productId, p.name);
+        }
+
+        let clientName: string | null = null;
+        if (validated.clientId) {
+            const c = await tx.client.findUnique({ where: { id: validated.clientId }, select: { name: true } });
+            clientName = c?.name || null;
+        }
+
         await tx.sale.create({
             data: {
                 clientId: validated.clientId,
+                clientName,
                 total,
                 paymentMethod: validated.paymentMethod,
-                items: { create: validated.items },
+                items: {
+                    create: validated.items.map(item => ({
+                        ...item,
+                        productName: productNames.get(item.productId) || null,
+                    })),
+                },
             },
         });
 
@@ -92,9 +110,24 @@ export async function getRecentSales(limit = 10) {
     return db.sale.findMany({
         take: safeLimit,
         orderBy: { createdAt: "desc" },
-        include: {
+        select: {
+            id: true,
+            total: true,
+            paymentMethod: true,
+            clientName: true,
+            clientDeleted: true,
+            createdAt: true,
             client: { select: { name: true } },
-            items: { include: { product: { select: { name: true } } } },
+            items: {
+                select: {
+                    id: true,
+                    productName: true,
+                    productDeleted: true,
+                    quantity: true,
+                    price: true,
+                    product: { select: { name: true } },
+                },
+            },
         },
     });
 }

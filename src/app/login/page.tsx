@@ -172,6 +172,16 @@ export default function LoginPage() {
                                 />
                                 Lembrar de mim
                             </label>
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setError("");
+                                    alert("Recuperação de senha: entre em contato com o administrador do sistema.");
+                                }}
+                                className="text-xs text-brand-purple/70 transition-colors hover:text-brand-purple"
+                            >
+                                Esqueceu a senha?
+                            </button>
                         </div>
 
                         {/* Submit */}
@@ -208,7 +218,7 @@ export default function LoginPage() {
                         disabled={demoLoading || loading}
                         whileHover={{ scale: 1.01 }}
                         whileTap={{ scale: 0.98 }}
-                        className="flex h-11 w-full items-center justify-center gap-2 rounded-2xl border border-border-glass bg-surface-glass/50 text-sm font-medium text-foreground/70 transition-all hover:bg-surface-glass hover:text-foreground disabled:opacity-70"
+                        className="flex h-11 w-full items-center justify-center gap-2 rounded-2xl border border-border-glass bg-surface/50 text-sm font-medium text-foreground/70 transition-all hover:bg-surface-elevated hover:text-foreground disabled:opacity-70"
                     >
                         {demoLoading ? (
                             <motion.div

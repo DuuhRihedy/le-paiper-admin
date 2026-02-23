@@ -61,12 +61,24 @@ export async function updateProduct(
     revalidatePath("/pdv");
 }
 
-export async function deleteProduct(id: string) {
+export async function deleteProduct(id: string): Promise<{ error?: string }> {
     await requireAdmin();
     const productId = z.string().cuid().parse(id);
-    const product = await db.product.findUnique({ where: { id: productId }, select: { name: true } });
+    const product = await db.product.findUnique({
+        where: { id: productId },
+        select: { name: true },
+    });
+    if (!product) return { error: "Produto não encontrado" };
+
+    // Marca itens de venda vinculados antes de excluir
+    await db.saleItem.updateMany({
+        where: { productId },
+        data: { productName: product.name, productDeleted: true },
+    });
+
     await db.product.delete({ where: { id: productId } });
-    await createAuditLog({ action: "delete", entity: "product", entityId: productId, details: product?.name });
+    await createAuditLog({ action: "delete", entity: "product", entityId: productId, details: product.name });
     revalidatePath("/inventario");
     revalidatePath("/pdv");
+    return {};
 }

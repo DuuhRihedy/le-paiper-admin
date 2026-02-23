@@ -55,9 +55,24 @@ export async function getDashboardData() {
     const recentSales = await db.sale.findMany({
         take: 5,
         orderBy: { createdAt: "desc" },
-        include: {
+        select: {
+            id: true,
+            total: true,
+            paymentMethod: true,
+            clientName: true,
+            clientDeleted: true,
+            createdAt: true,
             client: { select: { name: true } },
-            items: { include: { product: { select: { name: true } } } },
+            items: {
+                select: {
+                    id: true,
+                    quantity: true,
+                    price: true,
+                    productName: true,
+                    productDeleted: true,
+                    product: { select: { name: true } },
+                },
+            },
         },
     });
 

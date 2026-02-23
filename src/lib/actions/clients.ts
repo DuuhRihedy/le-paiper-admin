@@ -47,11 +47,23 @@ export async function updateClient(
     revalidatePath("/clientes");
 }
 
-export async function deleteClient(id: string) {
+export async function deleteClient(id: string): Promise<{ error?: string }> {
     await requireAdmin();
     const clientId = z.string().cuid().parse(id);
-    const client = await db.client.findUnique({ where: { id: clientId }, select: { name: true } });
+    const client = await db.client.findUnique({
+        where: { id: clientId },
+        select: { name: true },
+    });
+    if (!client) return { error: "Cliente não encontrado" };
+
+    // Marca vendas vinculadas antes de excluir
+    await db.sale.updateMany({
+        where: { clientId },
+        data: { clientName: client.name, clientDeleted: true },
+    });
+
     await db.client.delete({ where: { id: clientId } });
-    await createAuditLog({ action: "delete", entity: "client", entityId: clientId, details: client?.name });
+    await createAuditLog({ action: "delete", entity: "client", entityId: clientId, details: client.name });
     revalidatePath("/clientes");
+    return {};
 }

@@ -1,10 +1,10 @@
 "use server";
 
 import { db } from "@/lib/db";
-import { requireAuth } from "@/lib/auth-guard";
+import { requireAdmin } from "@/lib/auth-guard";
 
 export async function exportReportsCsv(days = 30) {
-    await requireAuth();
+    await requireAdmin();
 
     const now = new Date();
     const startDate = new Date(now.getTime() - days * 24 * 60 * 60 * 1000);
@@ -26,9 +26,9 @@ export async function exportReportsCsv(days = 30) {
         for (const item of sale.items) {
             rows.push([
                 sale.createdAt.toISOString().split("T")[0],
-                sale.client?.name ?? "Sem cliente",
-                item.product.name,
-                item.product.category,
+                sale.client?.name ?? sale.clientName ?? "Sem cliente",
+                item.product?.name ?? item.productName ?? "Produto removido",
+                item.product?.category ?? "—",
                 String(item.quantity),
                 item.price.toFixed(2),
                 (item.price * item.quantity).toFixed(2),

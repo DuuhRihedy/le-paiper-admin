@@ -1,9 +1,12 @@
 import { requireAuth, getUserRole } from "@/lib/auth-guard";
 import { getDashboardData } from "@/lib/actions/dashboard";
+import { getMockDashboardData } from "@/lib/mock-data";
 import { DashboardClient } from "./dashboard-client";
 
 export default async function DashboardPage() {
   await requireAuth();
-  const [data, role] = await Promise.all([getDashboardData(), getUserRole()]);
+  const role = await getUserRole();
+  const isViewer = role === "viewer";
+  const data = isViewer ? getMockDashboardData() : await getDashboardData();
   return <DashboardClient data={data} role={role ?? "admin"} />;
 }

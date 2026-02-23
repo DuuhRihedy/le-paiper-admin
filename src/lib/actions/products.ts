@@ -1,9 +1,25 @@
 "use server";
 
+import { z } from "zod";
 import { db } from "@/lib/db";
+import { requireAuth } from "@/lib/auth-guard";
 import { revalidatePath } from "next/cache";
+import { createAuditLog } from "@/lib/actions/audit";
+
+const createProductSchema = z.object({
+    name: z.string().min(1, "Nome é obrigatório").max(200),
+    category: z.string().min(1, "Categoria é obrigatória").max(100),
+    price: z.number().positive("Preço deve ser positivo"),
+    cost: z.number().nonnegative("Custo não pode ser negativo"),
+    stock: z.number().int().nonnegative("Estoque deve ser >= 0"),
+    minStock: z.number().int().nonnegative("Estoque mínimo deve ser >= 0"),
+    color: z.string().regex(/^#[0-9A-Fa-f]{6}$/, "Cor deve ser hexadecimal"),
+});
+
+const updateProductSchema = createProductSchema.partial();
 
 export async function getProducts() {
+    await requireAuth();
     return db.product.findMany({ orderBy: { createdAt: "desc" } });
 }
 
@@ -16,7 +32,10 @@ export async function createProduct(data: {
     minStock: number;
     color: string;
 }) {
-    await db.product.create({ data });
+    await requireAuth();
+    const validated = createProductSchema.parse(data);
+    const product = await db.product.create({ data: validated });
+    await createAuditLog({ action: "create", entity: "product", entityId: product.id, details: validated.name });
     revalidatePath("/inventario");
     revalidatePath("/pdv");
 }
@@ -33,13 +52,21 @@ export async function updateProduct(
         color?: string;
     }
 ) {
-    await db.product.update({ where: { id }, data });
+    await requireAuth();
+    const validated = updateProductSchema.parse(data);
+    const productId = z.string().cuid().parse(id);
+    await db.product.update({ where: { id: productId }, data: validated });
+    await createAuditLog({ action: "update", entity: "product", entityId: productId });
     revalidatePath("/inventario");
     revalidatePath("/pdv");
 }
 
 export async function deleteProduct(id: string) {
-    await db.product.delete({ where: { id } });
+    await requireAuth();
+    const productId = z.string().cuid().parse(id);
+    const product = await db.product.findUnique({ where: { id: productId }, select: { name: true } });
+    await db.product.delete({ where: { id: productId } });
+    await createAuditLog({ action: "delete", entity: "product", entityId: productId, details: product?.name });
     revalidatePath("/inventario");
     revalidatePath("/pdv");
 }

@@ -1,8 +1,11 @@
 "use server";
 
 import { db } from "@/lib/db";
+import { requireAuth } from "@/lib/auth-guard";
 
 export async function getDashboardData() {
+    await requireAuth();
+
     const now = new Date();
     const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
 
@@ -21,12 +24,32 @@ export async function getDashboardData() {
         where: { joinDate: { gte: thirtyDaysAgo } },
     });
 
-    // Low stock products (stock <= minStock)
-    const allProducts = await db.product.findMany();
-    const lowStock = allProducts
-        .filter((p) => p.stock <= p.minStock)
-        .sort((a, b) => a.stock - b.stock)
-        .slice(0, 5);
+    // Low stock products — query directly in the DB
+    const lowStock = await db.product.findMany({
+        where: {
+            stock: { lte: 5 },
+        },
+        orderBy: { stock: "asc" },
+        take: 5,
+    });
+
+    // For more accurate filtering, we post-filter products where stock <= minStock
+    // SQLite doesn't support column-to-column comparison in WHERE easily with Prisma,
+    // so we fetch a reasonable set and then filter
+    const lowStockFiltered = lowStock.filter((p) => p.stock <= p.minStock);
+
+    // If we didn't get enough, fetch more with a broader scope
+    let finalLowStock = lowStockFiltered;
+    if (lowStockFiltered.length < 5) {
+        const allLowish = await db.product.findMany({
+            where: { stock: { lte: 20 } },
+            orderBy: { stock: "asc" },
+            take: 20,
+        });
+        finalLowStock = allLowish
+            .filter((p) => p.stock <= p.minStock)
+            .slice(0, 5);
+    }
 
     // Recent sales
     const recentSales = await db.sale.findMany({
@@ -43,7 +66,7 @@ export async function getDashboardData() {
         totalSales,
         avgTicket,
         newClients,
-        lowStock,
+        lowStock: finalLowStock,
         recentSales,
     };
 }

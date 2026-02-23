@@ -1,15 +1,18 @@
 "use client";
 
+import { useState } from "react";
 import { motion } from "framer-motion";
 import {
     DollarSign, ShoppingBag, TrendingUp, Users,
-    BarChart3, Package,
+    BarChart3, Package, Download,
 } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import {
     AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell,
     XAxis, YAxis, Tooltip, ResponsiveContainer,
 } from "recharts";
+import { exportReportsCsv } from "@/lib/actions/export";
 
 type ReportsData = {
     kpis: { revenue: number; sales: number; avgTicket: number; clients: number };
@@ -43,6 +46,24 @@ const cardVariants = {
 };
 
 export function RelatoriosClient({ data }: { data: ReportsData }) {
+    const [exporting, setExporting] = useState(false);
+
+    async function handleExport() {
+        setExporting(true);
+        try {
+            const csv = await exportReportsCsv(30);
+            const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = `relatorio-${new Date().toISOString().split("T")[0]}.csv`;
+            a.click();
+            URL.revokeObjectURL(url);
+        } finally {
+            setExporting(false);
+        }
+    }
+
     const kpiCards = [
         { title: "Receita Total", value: formatCurrency(data.kpis.revenue), icon: DollarSign, iconBg: "bg-brand-mint/30", iconColor: "text-emerald-600" },
         { title: "Total de Vendas", value: String(data.kpis.sales), icon: ShoppingBag, iconBg: "bg-brand-sky/30", iconColor: "text-blue-600" },
@@ -52,9 +73,20 @@ export function RelatoriosClient({ data }: { data: ReportsData }) {
 
     return (
         <div className="space-y-8">
-            <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}>
-                <h1 className="text-2xl font-semibold tracking-tight text-brand-purple sm:text-3xl">Relatórios</h1>
-                <p className="mt-1 text-sm text-foreground/50">Análise de desempenho dos últimos 30 dias</p>
+            <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="flex items-center justify-between">
+                <div>
+                    <h1 className="text-2xl font-semibold tracking-tight text-brand-purple sm:text-3xl">Relatórios</h1>
+                    <p className="mt-1 text-sm text-foreground/50">Análise de desempenho dos últimos 30 dias</p>
+                </div>
+                <Button
+                    variant="outline"
+                    onClick={handleExport}
+                    disabled={exporting}
+                    className="gap-2"
+                >
+                    <Download className="h-4 w-4" />
+                    {exporting ? "Exportando..." : "Exportar CSV"}
+                </Button>
             </motion.div>
 
             {/* KPIs */}

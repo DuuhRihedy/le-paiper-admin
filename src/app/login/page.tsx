@@ -109,7 +109,6 @@ export default function LoginPage() {
                                 <input
                                     name="email"
                                     type="email"
-                                    defaultValue="admin@lepaiper.com"
                                     className="flex h-11 w-full rounded-2xl border border-border-glass bg-surface pl-10 pr-4 text-sm text-foreground transition-all placeholder:text-foreground/30 focus-visible:outline-2 focus-visible:outline-brand-purple"
                                     placeholder="seu@email.com"
                                     required
@@ -127,7 +126,6 @@ export default function LoginPage() {
                                 <input
                                     name="password"
                                     type={showPassword ? "text" : "password"}
-                                    defaultValue="lepaiper123"
                                     className="flex h-11 w-full rounded-2xl border border-border-glass bg-surface pl-10 pr-12 text-sm text-foreground transition-all placeholder:text-foreground/30 focus-visible:outline-2 focus-visible:outline-brand-purple"
                                     placeholder="••••••••"
                                     required
@@ -146,7 +144,7 @@ export default function LoginPage() {
                             </div>
                         </div>
 
-                        {/* Remember + Forgot */}
+                        {/* Remember */}
                         <div className="flex items-center justify-between">
                             <label className="flex items-center gap-2 text-xs text-foreground/50">
                                 <input
@@ -156,9 +154,6 @@ export default function LoginPage() {
                                 />
                                 Lembrar de mim
                             </label>
-                            <a href="#" className="text-xs font-medium text-brand-purple/80 transition-colors hover:text-brand-purple">
-                                Esqueceu a senha?
-                            </a>
                         </div>
 
                         {/* Submit */}

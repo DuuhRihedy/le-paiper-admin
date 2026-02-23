@@ -1,10 +1,17 @@
 "use server";
 
+import { z } from "zod";
 import { db } from "@/lib/db";
+import { requireAuth } from "@/lib/auth-guard";
+
+const getReportsSchema = z.number().int().positive().max(365).default(30);
 
 export async function getReportsData(days = 30) {
+    await requireAuth();
+    const safeDays = getReportsSchema.parse(days);
+
     const now = new Date();
-    const startDate = new Date(now.getTime() - days * 24 * 60 * 60 * 1000);
+    const startDate = new Date(now.getTime() - safeDays * 24 * 60 * 60 * 1000);
 
     // All sales in range
     const sales = await db.sale.findMany({

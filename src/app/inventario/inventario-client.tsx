@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Plus, Search, Pencil, Trash2, Package, X, AlertTriangle } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
@@ -39,18 +39,18 @@ export function InventarioClient({ products, role }: { products: Product[]; role
     const [isPending, startTransition] = useTransition();
     const { toast } = useToast();
 
-    const filtered = products.filter((p) => {
+    const filtered = useMemo(() => products.filter((p) => {
         const matchSearch = p.name.toLowerCase().includes(search.toLowerCase());
         const matchFilter = filter === "Todos" || p.category === filter;
         return matchSearch && matchFilter;
-    });
+    }), [products, search, filter]);
 
     function openEdit(product: Product) {
         setForm({
             name: product.name,
             category: product.category,
-            price: product.price,
-            cost: product.cost,
+            price: Number(product.price),
+            cost: Number(product.cost),
             stock: product.stock,
             minStock: product.minStock,
             color: product.color,
@@ -193,7 +193,7 @@ export function InventarioClient({ products, role }: { products: Product[]; role
                                         </td>
                                         <td className="px-4 py-3 text-foreground/60">{product.category}</td>
                                         <td className="px-4 py-3 text-right font-medium">
-                                            R$ {product.price.toFixed(2)}
+                                            R$ {Number(product.price).toFixed(2)}
                                         </td>
                                         <td className="px-4 py-3 text-center">
                                             <Badge variant={product.stock <= product.minStock ? "pink" : "mint"}>
@@ -205,6 +205,7 @@ export function InventarioClient({ products, role }: { products: Product[]; role
                                                 <div className="flex items-center justify-end gap-1">
                                                     <button
                                                         onClick={() => openEdit(product)}
+                                                        aria-label="Editar produto"
                                                         className="rounded-lg p-2 text-foreground/40 transition-colors hover:bg-brand-lilac/10 hover:text-brand-purple"
                                                     >
                                                         <Pencil className="h-4 w-4" />
@@ -212,6 +213,7 @@ export function InventarioClient({ products, role }: { products: Product[]; role
                                                     <button
                                                         onClick={() => confirmDelete(product)}
                                                         disabled={isPending}
+                                                        aria-label="Excluir produto"
                                                         className="rounded-lg p-2 text-foreground/40 transition-colors hover:bg-pink-100 hover:text-pink-600 dark:hover:bg-pink-950"
                                                     >
                                                         <Trash2 className="h-4 w-4" />
@@ -257,20 +259,21 @@ export function InventarioClient({ products, role }: { products: Product[]; role
                                 <h2 className="text-lg font-semibold">
                                     {editingId ? "Editar Produto" : "Novo Produto"}
                                 </h2>
-                                <button onClick={() => setShowForm(false)} className="rounded-lg p-1 text-foreground/40 hover:text-foreground">
+                                <button onClick={() => setShowForm(false)} aria-label="Fechar modal" className="rounded-lg p-1 text-foreground/40 hover:text-foreground">
                                     <X className="h-5 w-5" />
                                 </button>
                             </div>
 
                             <div className="space-y-4">
                                 <div>
-                                    <label className="mb-1 block text-xs font-medium text-foreground/60">Nome</label>
-                                    <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
+                                    <label htmlFor="product-name" className="mb-1 block text-xs font-medium text-foreground/60">Nome</label>
+                                    <Input id="product-name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
                                 </div>
                                 <div className="grid grid-cols-2 gap-4">
                                     <div>
-                                        <label className="mb-1 block text-xs font-medium text-foreground/60">Categoria</label>
+                                        <label htmlFor="product-category" className="mb-1 block text-xs font-medium text-foreground/60">Categoria</label>
                                         <select
+                                            id="product-category"
                                             value={form.category}
                                             onChange={(e) => setForm({ ...form, category: e.target.value })}
                                             className="flex h-10 w-full appearance-none rounded-2xl border border-border-glass bg-surface px-3 pr-8 text-sm text-foreground transition-all focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-purple"
@@ -280,8 +283,8 @@ export function InventarioClient({ products, role }: { products: Product[]; role
                                         </select>
                                     </div>
                                     <div>
-                                        <label className="mb-1 block text-xs font-medium text-foreground/60">Cor</label>
-                                        <div className="flex gap-2">
+                                        <label htmlFor="product-color" className="mb-1 block text-xs font-medium text-foreground/60">Cor</label>
+                                        <div id="product-color" className="flex gap-2">
                                             {colors.map((c) => (
                                                 <button
                                                     key={c}
@@ -295,22 +298,22 @@ export function InventarioClient({ products, role }: { products: Product[]; role
                                 </div>
                                 <div className="grid grid-cols-2 gap-4">
                                     <div>
-                                        <label className="mb-1 block text-xs font-medium text-foreground/60">Preço (R$)</label>
-                                        <Input type="number" step="0.01" min="0" value={form.price} onChange={(e) => setForm({ ...form, price: Number(e.target.value) })} />
+                                        <label htmlFor="product-price" className="mb-1 block text-xs font-medium text-foreground/60">Preço (R$)</label>
+                                        <Input id="product-price" type="number" step="0.01" min="0" value={form.price} onChange={(e) => setForm({ ...form, price: Number(e.target.value) })} />
                                     </div>
                                     <div>
-                                        <label className="mb-1 block text-xs font-medium text-foreground/60">Custo (R$)</label>
-                                        <Input type="number" step="0.01" min="0" value={form.cost} onChange={(e) => setForm({ ...form, cost: Number(e.target.value) })} />
+                                        <label htmlFor="product-cost" className="mb-1 block text-xs font-medium text-foreground/60">Custo (R$)</label>
+                                        <Input id="product-cost" type="number" step="0.01" min="0" value={form.cost} onChange={(e) => setForm({ ...form, cost: Number(e.target.value) })} />
                                     </div>
                                 </div>
                                 <div className="grid grid-cols-2 gap-4">
                                     <div>
-                                        <label className="mb-1 block text-xs font-medium text-foreground/60">Estoque</label>
-                                        <Input type="number" min="0" value={form.stock} onChange={(e) => setForm({ ...form, stock: Number(e.target.value) })} />
+                                        <label htmlFor="product-stock" className="mb-1 block text-xs font-medium text-foreground/60">Estoque</label>
+                                        <Input id="product-stock" type="number" min="0" value={form.stock} onChange={(e) => setForm({ ...form, stock: Number(e.target.value) })} />
                                     </div>
                                     <div>
-                                        <label className="mb-1 block text-xs font-medium text-foreground/60">Estoque Mínimo</label>
-                                        <Input type="number" min="0" value={form.minStock} onChange={(e) => setForm({ ...form, minStock: Number(e.target.value) })} />
+                                        <label htmlFor="product-minstock" className="mb-1 block text-xs font-medium text-foreground/60">Estoque Mínimo</label>
+                                        <Input id="product-minstock" type="number" min="0" value={form.minStock} onChange={(e) => setForm({ ...form, minStock: Number(e.target.value) })} />
                                     </div>
                                 </div>
                             </div>

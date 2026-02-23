@@ -34,13 +34,18 @@ export async function updateSetting(key: string, value: string) {
 export async function updateSettings(entries: { key: string; value: string }[]) {
     await requireAdmin();
     const validated = z.array(settingSchema).parse(entries);
-    for (const entry of validated) {
-        await db.setting.upsert({
-            where: { key: entry.key },
-            update: { value: entry.value },
-            create: { key: entry.key, value: entry.value },
-        });
-    }
+
+    // Batch upserts in a single transaction for atomicity
+    await db.$transaction(
+        validated.map((entry) =>
+            db.setting.upsert({
+                where: { key: entry.key },
+                update: { value: entry.value },
+                create: { key: entry.key, value: entry.value },
+            })
+        )
+    );
+
     revalidatePath("/configuracoes");
 }
 

@@ -29,9 +29,9 @@ export async function getReportsData(days = 30) {
     for (const sale of sales) {
         const day = sale.createdAt.toISOString().split("T")[0];
         if (!revenueByDay[day]) revenueByDay[day] = { revenue: 0, cost: 0 };
-        revenueByDay[day].revenue += sale.total;
+        revenueByDay[day].revenue += Number(sale.total);
         for (const item of sale.items) {
-            revenueByDay[day].cost += (item.product?.cost ?? 0) * item.quantity;
+            revenueByDay[day].cost += Number(item.product?.cost ?? 0) * item.quantity;
         }
     }
 
@@ -70,7 +70,7 @@ export async function getReportsData(days = 30) {
             const key = item.product?.name ?? item.productName ?? "Produto excluído";
             if (!productMap[key]) productMap[key] = { name: key, quantity: 0, revenue: 0 };
             productMap[key].quantity += item.quantity;
-            productMap[key].revenue += item.price * item.quantity;
+            productMap[key].revenue += Number(item.price) * item.quantity;
         }
     }
     const topProducts = Object.values(productMap)
@@ -78,7 +78,7 @@ export async function getReportsData(days = 30) {
         .slice(0, 5);
 
     // KPIs
-    const totalRevenue = sales.reduce((acc, s) => acc + s.total, 0);
+    const totalRevenue = sales.reduce((acc, s) => acc + Number(s.total), 0);
     const totalOrders = sales.length;
     const avgTicket = totalOrders > 0 ? totalRevenue / totalOrders : 0;
     const totalClients = await db.client.count();

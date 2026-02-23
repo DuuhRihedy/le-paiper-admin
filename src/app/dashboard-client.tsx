@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo } from "react";
 import {
     DollarSign,
     ShoppingBag,
@@ -69,7 +70,7 @@ function timeAgo(date: Date | string) {
 }
 
 export function DashboardClient({ data, role }: { data: DashboardData; role: string }) {
-    const summaryCards = [
+    const summaryCards = useMemo(() => [
         {
             title: "Faturamento",
             value: formatCurrency(data.revenue),
@@ -102,7 +103,7 @@ export function DashboardClient({ data, role }: { data: DashboardData; role: str
             iconBg: "bg-brand-pink/20",
             iconColor: "text-pink-600",
         },
-    ];
+    ], [data]);
 
     return (
         <div className="space-y-8">
@@ -272,7 +273,7 @@ export function DashboardClient({ data, role }: { data: DashboardData; role: str
                                         </div>
                                         <div className="text-right">
                                             <p className="text-sm font-semibold text-emerald-600">
-                                                {formatCurrency(sale.total)}
+                                                {formatCurrency(Number(sale.total))}
                                             </p>
                                             <p className="text-xs text-foreground/30">
                                                 {sale.paymentMethod.toUpperCase()} · {timeAgo(sale.createdAt)}

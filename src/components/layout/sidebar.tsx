@@ -44,6 +44,7 @@ export function Sidebar() {
                         <Link
                             href={item.href}
                             onClick={() => setMobileOpen(false)}
+                            {...(isActive ? { "aria-current": "page" as const } : {})}
                             className={cn(
                                 "flex items-center gap-3 rounded-2xl px-4 py-2.5 text-sm font-medium transition-all duration-200",
                                 isActive

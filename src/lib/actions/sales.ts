@@ -27,15 +27,20 @@ export async function createSale(data: {
 }) {
     await requireAdmin();
     const validated = createSaleSchema.parse(data);
-    const total = validated.items.reduce((acc, item) => acc + item.price * item.quantity, 0);
 
     await db.$transaction(async (tx) => {
-        // Validate stock availability before proceeding
+        // Fetch all products in a single query (eliminates N+1)
+        const productIds = validated.items.map((item) => item.productId);
+        const products = await tx.product.findMany({
+            where: { id: { in: productIds } },
+            select: { id: true, name: true, stock: true, price: true },
+        });
+
+        const productMap = new Map(products.map((p) => [p.id, p]));
+
+        // Validate all products exist and have stock
         for (const item of validated.items) {
-            const product = await tx.product.findUnique({
-                where: { id: item.productId },
-                select: { name: true, stock: true },
-            });
+            const product = productMap.get(item.productId);
             if (!product) {
                 throw new Error(`Produto não encontrado: ${item.productId}`);
             }
@@ -46,19 +51,39 @@ export async function createSale(data: {
             }
         }
 
-        // Create sale with items
-        const productNames = new Map<string, string>();
+        // Atomic stock decrement — prevents race conditions
+        // Uses WHERE stock >= quantity so concurrent sales can't oversell
         for (const item of validated.items) {
-            const p = await tx.product.findUnique({ where: { id: item.productId }, select: { name: true } });
-            if (p) productNames.set(item.productId, p.name);
+            const result = await tx.product.updateMany({
+                where: {
+                    id: item.productId,
+                    stock: { gte: item.quantity },
+                },
+                data: { stock: { decrement: item.quantity } },
+            });
+            if (result.count === 0) {
+                const product = productMap.get(item.productId);
+                throw new Error(
+                    `Estoque insuficiente para "${product?.name ?? item.productId}" (venda concorrente detectada)`
+                );
+            }
         }
 
+        // Calculate total using server-side prices (don't trust client price)
+        const total = validated.items.reduce((acc, item) => {
+            const product = productMap.get(item.productId);
+            const serverPrice = product ? Number(product.price) : item.price;
+            return acc + serverPrice * item.quantity;
+        }, 0);
+
+        // Get client name if provided
         let clientName: string | null = null;
         if (validated.clientId) {
             const c = await tx.client.findUnique({ where: { id: validated.clientId }, select: { name: true } });
             clientName = c?.name || null;
         }
 
+        // Create sale with items using server-side prices
         await tx.sale.create({
             data: {
                 clientId: validated.clientId,
@@ -66,21 +91,18 @@ export async function createSale(data: {
                 total,
                 paymentMethod: validated.paymentMethod,
                 items: {
-                    create: validated.items.map(item => ({
-                        ...item,
-                        productName: productNames.get(item.productId) || null,
-                    })),
+                    create: validated.items.map((item) => {
+                        const product = productMap.get(item.productId);
+                        return {
+                            productId: item.productId,
+                            quantity: item.quantity,
+                            price: product ? Number(product.price) : item.price,
+                            productName: product?.name || null,
+                        };
+                    }),
                 },
             },
         });
-
-        // Update stock for each product
-        for (const item of validated.items) {
-            await tx.product.update({
-                where: { id: item.productId },
-                data: { stock: { decrement: item.quantity } },
-            });
-        }
 
         // Update client stats if clientId provided
         if (validated.clientId) {
@@ -95,7 +117,13 @@ export async function createSale(data: {
         }
     });
 
-    await createAuditLog({ action: "create", entity: "sale", details: `Venda R$${total.toFixed(2)} - ${validated.items.length} itens` });
+    // Audit log outside transaction (non-critical, should not block sale)
+    try {
+        const total = validated.items.reduce((acc, item) => acc + item.price * item.quantity, 0);
+        await createAuditLog({ action: "create", entity: "sale", details: `Venda R$${total.toFixed(2)} - ${validated.items.length} itens` });
+    } catch {
+        // Audit failure should never break a successful sale
+    }
 
     revalidatePath("/");
     revalidatePath("/pdv");

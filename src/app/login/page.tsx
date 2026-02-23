@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import { Package, Eye, EyeOff, Lock, Mail, AlertCircle } from "lucide-react";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import { demoLogin } from "@/lib/actions/demo-login";
 
 export default function LoginPage() {
     const [showPassword, setShowPassword] = useState(false);
@@ -41,13 +42,10 @@ export default function LoginPage() {
     async function handleDemoLogin() {
         setDemoLoading(true);
         setError("");
-        const result = await signIn("credentials", {
-            email: "demo@lepaiper.com",
-            password: "demo123",
-            redirect: false,
-        });
+        // Credentials stay server-side — never exposed in client bundle
+        const result = await demoLogin();
         if (result?.error) {
-            setError("Erro ao entrar no modo demo.");
+            setError(result.error);
             setDemoLoading(false);
             return;
         }
@@ -119,12 +117,13 @@ export default function LoginPage() {
                     >
                         {/* Email */}
                         <div>
-                            <label className="mb-1.5 block text-xs font-medium text-foreground/60">
+                            <label htmlFor="email" className="mb-1.5 block text-xs font-medium text-foreground/60">
                                 Email
                             </label>
                             <div className="relative">
                                 <Mail className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-foreground/30" />
                                 <input
+                                    id="email"
                                     name="email"
                                     type="email"
                                     className="flex h-11 w-full rounded-2xl border border-border-glass bg-surface pl-10 pr-4 text-sm text-foreground transition-all placeholder:text-foreground/30 focus-visible:outline-2 focus-visible:outline-brand-purple"
@@ -136,12 +135,13 @@ export default function LoginPage() {
 
                         {/* Password */}
                         <div>
-                            <label className="mb-1.5 block text-xs font-medium text-foreground/60">
+                            <label htmlFor="password" className="mb-1.5 block text-xs font-medium text-foreground/60">
                                 Senha
                             </label>
                             <div className="relative">
                                 <Lock className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-foreground/30" />
                                 <input
+                                    id="password"
                                     name="password"
                                     type={showPassword ? "text" : "password"}
                                     className="flex h-11 w-full rounded-2xl border border-border-glass bg-surface pl-10 pr-12 text-sm text-foreground transition-all placeholder:text-foreground/30 focus-visible:outline-2 focus-visible:outline-brand-purple"
@@ -151,6 +151,7 @@ export default function LoginPage() {
                                 <button
                                     type="button"
                                     onClick={() => setShowPassword(!showPassword)}
+                                    aria-label="Mostrar/ocultar senha"
                                     className="absolute right-3 top-1/2 -translate-y-1/2 rounded-lg p-1 text-foreground/30 transition-colors hover:text-foreground/60"
                                 >
                                     {showPassword ? (

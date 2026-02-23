@@ -12,8 +12,9 @@ model User {
   name      String
   email     String     @unique
   password  String
-  role      String     @default("admin")
+  role      String     @default("viewer")
   createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
   auditLogs AuditLog[]
 }
 
@@ -21,12 +22,13 @@ model Product {
   id        String     @id @default(cuid())
   name      String
   category  String
-  price     Float
-  cost      Float
+  price     Decimal    @db.Decimal(10, 2)
+  cost      Decimal    @db.Decimal(10, 2)
   stock     Int
   minStock  Int        @default(5)
   color     String     @default("#8B5CF6")
   createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
   saleItems SaleItem[]
 }
 
@@ -35,11 +37,14 @@ model Client {
   name         String
   email        String    @unique
   phone        String
-  totalSpent   Float     @default(0)
+  totalSpent   Decimal   @default(0) @db.Decimal(10, 2)
   totalOrders  Int       @default(0)
   lastPurchase DateTime?
   joinDate     DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
   sales        Sale[]
+
+  @@index([joinDate])
 }
 
 model Sale {
@@ -48,10 +53,13 @@ model Sale {
   client        Client?    @relation(fields: [clientId], references: [id], onDelete: SetNull)
   clientName    String?
   clientDeleted Boolean    @default(false)
-  total         Float
+  total         Decimal    @db.Decimal(10, 2)
   paymentMethod String
   items         SaleItem[]
   createdAt     DateTime   @default(now())
+
+  @@index([createdAt])
+  @@index([clientId])
 }
 
 model SaleItem {
@@ -63,7 +71,10 @@ model SaleItem {
   productName    String?
   productDeleted Boolean  @default(false)
   quantity       Int
-  price          Float
+  price          Decimal  @db.Decimal(10, 2)
+
+  @@index([saleId])
+  @@index([productId])
 }
 
 model Setting {
@@ -74,11 +85,14 @@ model Setting {
 
 model AuditLog {
   id        String   @id @default(cuid())
-  userId    String
-  user      User     @relation(fields: [userId], references: [id])
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
   action    String
   entity    String
   entityId  String?
   details   String?
   createdAt DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([userId])
 }

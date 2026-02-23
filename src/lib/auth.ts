@@ -39,7 +39,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
                         return null;
                     }
 
-                    const user = await db.user.findUnique({ where: { email } });
+                    // Case-insensitive email lookup
+                    const user = await db.user.findUnique({ where: { email: email.toLowerCase() } });
                     if (!user) {
                         // Timing-safe: delay even on invalid email
                         await new Promise((r) => setTimeout(r, 800));
@@ -61,7 +62,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             },
         }),
     ],
-    session: { strategy: "jwt" },
+    session: { strategy: "jwt", maxAge: 8 * 60 * 60 }, // 8 hours
     pages: { signIn: "/login" },
     callbacks: {
         jwt({ token, user }) {

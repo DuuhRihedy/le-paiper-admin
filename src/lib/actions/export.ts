@@ -1,13 +1,15 @@
 "use server";
 
+import { z } from "zod";
 import { db } from "@/lib/db";
 import { requireAdmin } from "@/lib/auth-guard";
 
 export async function exportReportsCsv(days = 30) {
     await requireAdmin();
 
+    const safeDays = z.number().int().positive().max(365).parse(days);
     const now = new Date();
-    const startDate = new Date(now.getTime() - days * 24 * 60 * 60 * 1000);
+    const startDate = new Date(now.getTime() - safeDays * 24 * 60 * 60 * 1000);
 
     const sales = await db.sale.findMany({
         where: { createdAt: { gte: startDate } },
@@ -30,8 +32,8 @@ export async function exportReportsCsv(days = 30) {
                 item.product?.name ?? item.productName ?? "Produto removido",
                 item.product?.category ?? "—",
                 String(item.quantity),
-                item.price.toFixed(2),
-                (item.price * item.quantity).toFixed(2),
+                Number(item.price).toFixed(2),
+                (Number(item.price) * item.quantity).toFixed(2),
                 sale.paymentMethod,
             ]);
         }

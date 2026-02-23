@@ -3,6 +3,7 @@
 import { z } from "zod";
 import { db } from "@/lib/db";
 import { auth } from "@/lib/auth";
+import { requireAdmin } from "@/lib/auth-guard";
 
 const auditSchema = z.object({
     action: z.string().min(1).max(50),
@@ -17,22 +18,24 @@ export async function createAuditLog(data: {
     entityId?: string;
     details?: string;
 }) {
-    const session = await auth();
-    if (!session?.user?.id) return; // Silently skip if no session
+    try {
+        const session = await auth();
+        if (!session?.user?.id) return; // Silently skip if no session
 
-    const validated = auditSchema.parse(data);
-    await db.auditLog.create({
-        data: {
-            userId: session.user.id,
-            ...validated,
-        },
-    });
+        const validated = auditSchema.parse(data);
+        await db.auditLog.create({
+            data: {
+                userId: session.user.id,
+                ...validated,
+            },
+        });
+    } catch {
+        // Audit log failure should never break the calling operation
+    }
 }
 
 export async function getAuditLogs(limit = 50) {
-    const session = await auth();
-    if (!session?.user) return [];
-
+    await requireAdmin(); // Only admins can view audit logs
     const safeLimit = z.number().int().positive().max(200).parse(limit);
     return db.auditLog.findMany({
         take: safeLimit,

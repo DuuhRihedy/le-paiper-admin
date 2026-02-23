@@ -16,12 +16,24 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
                     const email = credentials?.email as string;
                     const password = credentials?.password as string;
 
-                    if (!email || !password) return null;
+                    console.log("[AUTH] Login attempt for:", email);
+
+                    if (!email || !password) {
+                        console.log("[AUTH] Missing email or password");
+                        return null;
+                    }
 
                     const user = await db.user.findUnique({ where: { email } });
-                    if (!user) return null;
+                    console.log("[AUTH] User found:", !!user, user?.email);
+
+                    if (!user) {
+                        console.log("[AUTH] User not found in database");
+                        return null;
+                    }
 
                     const isValid = await compare(password, user.password);
+                    console.log("[AUTH] Password valid:", isValid);
+
                     if (!isValid) return null;
 
                     return { id: user.id, name: user.name, email: user.email, role: user.role };

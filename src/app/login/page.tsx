@@ -9,6 +9,7 @@ import { useRouter } from "next/navigation";
 export default function LoginPage() {
     const [showPassword, setShowPassword] = useState(false);
     const [loading, setLoading] = useState(false);
+    const [demoLoading, setDemoLoading] = useState(false);
     const [error, setError] = useState("");
     const router = useRouter();
 
@@ -33,6 +34,23 @@ export default function LoginPage() {
             return;
         }
 
+        router.push("/");
+        router.refresh();
+    }
+
+    async function handleDemoLogin() {
+        setDemoLoading(true);
+        setError("");
+        const result = await signIn("credentials", {
+            email: "demo@lepaiper.com",
+            password: "demo123",
+            redirect: false,
+        });
+        if (result?.error) {
+            setError("Erro ao entrar no modo demo.");
+            setDemoLoading(false);
+            return;
+        }
         router.push("/");
         router.refresh();
     }
@@ -175,6 +193,36 @@ export default function LoginPage() {
                             )}
                         </motion.button>
                     </motion.form>
+
+                    {/* Demo access divider */}
+                    <div className="my-4 flex items-center gap-3">
+                        <div className="h-px flex-1 bg-border-glass" />
+                        <span className="text-xs text-foreground/30">ou</span>
+                        <div className="h-px flex-1 bg-border-glass" />
+                    </div>
+
+                    {/* Demo button */}
+                    <motion.button
+                        type="button"
+                        onClick={handleDemoLogin}
+                        disabled={demoLoading || loading}
+                        whileHover={{ scale: 1.01 }}
+                        whileTap={{ scale: 0.98 }}
+                        className="flex h-11 w-full items-center justify-center gap-2 rounded-2xl border border-border-glass bg-surface-glass/50 text-sm font-medium text-foreground/70 transition-all hover:bg-surface-glass hover:text-foreground disabled:opacity-70"
+                    >
+                        {demoLoading ? (
+                            <motion.div
+                                animate={{ rotate: 360 }}
+                                transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                                className="h-5 w-5 rounded-full border-2 border-foreground/30 border-t-foreground"
+                            />
+                        ) : (
+                            <>
+                                <Eye className="h-4 w-4" />
+                                Entrar como Visitante
+                            </>
+                        )}
+                    </motion.button>
 
                     {/* Footer */}
                     <motion.p

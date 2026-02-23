@@ -2,7 +2,7 @@
 
 import { z } from "zod";
 import { db } from "@/lib/db";
-import { requireAuth } from "@/lib/auth-guard";
+import { requireAuth, requireAdmin } from "@/lib/auth-guard";
 import { revalidatePath } from "next/cache";
 import { createAuditLog } from "@/lib/actions/audit";
 
@@ -25,7 +25,7 @@ export async function createSale(data: {
     paymentMethod: string;
     items: { productId: string; quantity: number; price: number }[];
 }) {
-    await requireAuth();
+    await requireAdmin();
     const validated = createSaleSchema.parse(data);
     const total = validated.items.reduce((acc, item) => acc + item.price * item.quantity, 0);
 

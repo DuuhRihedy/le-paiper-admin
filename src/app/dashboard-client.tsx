@@ -45,7 +45,7 @@ function formatCurrency(value: number) {
     return value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 }
 
-export function DashboardClient({ data }: { data: DashboardData }) {
+export function DashboardClient({ data, role }: { data: DashboardData; role: string }) {
     const summaryCards = [
         {
             title: "Faturamento",

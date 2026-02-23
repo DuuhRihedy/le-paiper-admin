@@ -28,7 +28,8 @@ const emptyForm = {
     name: "", category: "Cadernos", price: 0, cost: 0, stock: 0, minStock: 5, color: "#8B5CF6",
 };
 
-export function InventarioClient({ products }: { products: Product[] }) {
+export function InventarioClient({ products, role }: { products: Product[]; role: string }) {
+    const isViewer = role === "viewer";
     const [search, setSearch] = useState("");
     const [filter, setFilter] = useState("Todos");
     const [showForm, setShowForm] = useState(false);
@@ -104,9 +105,11 @@ export function InventarioClient({ products }: { products: Product[] }) {
                         {products.length} produtos cadastrados
                     </p>
                 </div>
-                <Button onClick={openNew}>
-                    <Plus className="mr-2 h-4 w-4" /> Novo Produto
-                </Button>
+                {!isViewer && (
+                    <Button onClick={openNew}>
+                        <Plus className="mr-2 h-4 w-4" /> Novo Produto
+                    </Button>
+                )}
             </motion.div>
 
             {/* Search + Filter */}
@@ -131,8 +134,8 @@ export function InventarioClient({ products }: { products: Product[] }) {
                             key={cat}
                             onClick={() => setFilter(cat)}
                             className={`whitespace-nowrap rounded-xl px-4 py-2 text-sm font-medium transition-all ${filter === cat
-                                    ? "bg-brand-purple text-white shadow-md"
-                                    : "bg-surface text-foreground/60 hover:bg-brand-lilac/10"
+                                ? "bg-brand-purple text-white shadow-md"
+                                : "bg-surface text-foreground/60 hover:bg-brand-lilac/10"
                                 }`}
                         >
                             {cat}
@@ -152,7 +155,7 @@ export function InventarioClient({ products }: { products: Product[] }) {
                                     <th className="px-4 py-3 text-left font-medium text-foreground/50">Categoria</th>
                                     <th className="px-4 py-3 text-right font-medium text-foreground/50">Preço</th>
                                     <th className="px-4 py-3 text-center font-medium text-foreground/50">Estoque</th>
-                                    <th className="px-4 py-3 text-right font-medium text-foreground/50">Ações</th>
+                                    {!isViewer && <th className="px-4 py-3 text-right font-medium text-foreground/50">Ações</th>}
                                 </tr>
                             </thead>
                             <tbody>
@@ -186,23 +189,25 @@ export function InventarioClient({ products }: { products: Product[] }) {
                                                 {product.stock} un.
                                             </Badge>
                                         </td>
-                                        <td className="px-4 py-3 text-right">
-                                            <div className="flex items-center justify-end gap-1">
-                                                <button
-                                                    onClick={() => openEdit(product)}
-                                                    className="rounded-lg p-2 text-foreground/40 transition-colors hover:bg-brand-lilac/10 hover:text-brand-purple"
-                                                >
-                                                    <Pencil className="h-4 w-4" />
-                                                </button>
-                                                <button
-                                                    onClick={() => handleDelete(product.id)}
-                                                    disabled={isPending}
-                                                    className="rounded-lg p-2 text-foreground/40 transition-colors hover:bg-pink-100 hover:text-pink-600 dark:hover:bg-pink-950"
-                                                >
-                                                    <Trash2 className="h-4 w-4" />
-                                                </button>
-                                            </div>
-                                        </td>
+                                        {!isViewer && (
+                                            <td className="px-4 py-3 text-right">
+                                                <div className="flex items-center justify-end gap-1">
+                                                    <button
+                                                        onClick={() => openEdit(product)}
+                                                        className="rounded-lg p-2 text-foreground/40 transition-colors hover:bg-brand-lilac/10 hover:text-brand-purple"
+                                                    >
+                                                        <Pencil className="h-4 w-4" />
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleDelete(product.id)}
+                                                        disabled={isPending}
+                                                        className="rounded-lg p-2 text-foreground/40 transition-colors hover:bg-pink-100 hover:text-pink-600 dark:hover:bg-pink-950"
+                                                    >
+                                                        <Trash2 className="h-4 w-4" />
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        )}
                                     </motion.tr>
                                 ))}
                             </tbody>

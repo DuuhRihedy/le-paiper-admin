@@ -33,7 +33,8 @@ function formatCurrency(v: number) {
 
 const emptyForm = { name: "", email: "", phone: "" };
 
-export function ClientesClient({ clients }: { clients: Client[] }) {
+export function ClientesClient({ clients, role }: { clients: Client[]; role: string }) {
+    const isViewer = role === "viewer";
     const [search, setSearch] = useState("");
     const [tierFilter, setTierFilter] = useState("Todos");
     const [showForm, setShowForm] = useState(false);
@@ -101,7 +102,7 @@ export function ClientesClient({ clients }: { clients: Client[] }) {
                     <h1 className="text-2xl font-semibold tracking-tight text-brand-purple sm:text-3xl">Clientes</h1>
                     <p className="mt-1 text-sm text-foreground/50">{totalClients} clientes cadastrados</p>
                 </div>
-                <Button onClick={openNew}><Plus className="mr-2 h-4 w-4" /> Novo Cliente</Button>
+                {!isViewer && <Button onClick={openNew}><Plus className="mr-2 h-4 w-4" /> Novo Cliente</Button>}
             </motion.div>
 
             {/* Stats */}
@@ -164,7 +165,7 @@ export function ClientesClient({ clients }: { clients: Client[] }) {
                                     <th className="px-4 py-3 text-left font-medium text-foreground/50">Tier</th>
                                     <th className="px-4 py-3 text-right font-medium text-foreground/50">Gasto Total</th>
                                     <th className="px-4 py-3 text-center font-medium text-foreground/50">Pedidos</th>
-                                    <th className="px-4 py-3 text-right font-medium text-foreground/50">Ações</th>
+                                    {!isViewer && <th className="px-4 py-3 text-right font-medium text-foreground/50">Ações</th>}
                                 </tr>
                             </thead>
                             <tbody>
@@ -193,16 +194,18 @@ export function ClientesClient({ clients }: { clients: Client[] }) {
                                             </td>
                                             <td className="px-4 py-3 text-right font-medium">{formatCurrency(client.totalSpent)}</td>
                                             <td className="px-4 py-3 text-center">{client.totalOrders}</td>
-                                            <td className="px-4 py-3 text-right">
-                                                <div className="flex items-center justify-end gap-1">
-                                                    <button onClick={() => openEdit(client)} className="rounded-lg p-2 text-foreground/40 hover:bg-brand-lilac/10 hover:text-brand-purple">
-                                                        <Pencil className="h-4 w-4" />
-                                                    </button>
-                                                    <button onClick={() => handleDelete(client.id)} disabled={isPending} className="rounded-lg p-2 text-foreground/40 hover:bg-pink-100 hover:text-pink-600 dark:hover:bg-pink-950">
-                                                        <Trash2 className="h-4 w-4" />
-                                                    </button>
-                                                </div>
-                                            </td>
+                                            {!isViewer && (
+                                                <td className="px-4 py-3 text-right">
+                                                    <div className="flex items-center justify-end gap-1">
+                                                        <button onClick={() => openEdit(client)} className="rounded-lg p-2 text-foreground/40 hover:bg-brand-lilac/10 hover:text-brand-purple">
+                                                            <Pencil className="h-4 w-4" />
+                                                        </button>
+                                                        <button onClick={() => handleDelete(client.id)} disabled={isPending} className="rounded-lg p-2 text-foreground/40 hover:bg-pink-100 hover:text-pink-600 dark:hover:bg-pink-950">
+                                                            <Trash2 className="h-4 w-4" />
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            )}
                                         </motion.tr>
                                     );
                                 })}

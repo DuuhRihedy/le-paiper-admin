@@ -2,7 +2,7 @@
 
 import { z } from "zod";
 import { db } from "@/lib/db";
-import { requireAuth } from "@/lib/auth-guard";
+import { requireAuth, requireAdmin } from "@/lib/auth-guard";
 import { revalidatePath } from "next/cache";
 import { createAuditLog } from "@/lib/actions/audit";
 
@@ -32,7 +32,7 @@ export async function createProduct(data: {
     minStock: number;
     color: string;
 }) {
-    await requireAuth();
+    await requireAdmin();
     const validated = createProductSchema.parse(data);
     const product = await db.product.create({ data: validated });
     await createAuditLog({ action: "create", entity: "product", entityId: product.id, details: validated.name });
@@ -52,7 +52,7 @@ export async function updateProduct(
         color?: string;
     }
 ) {
-    await requireAuth();
+    await requireAdmin();
     const validated = updateProductSchema.parse(data);
     const productId = z.string().cuid().parse(id);
     await db.product.update({ where: { id: productId }, data: validated });
@@ -62,7 +62,7 @@ export async function updateProduct(
 }
 
 export async function deleteProduct(id: string) {
-    await requireAuth();
+    await requireAdmin();
     const productId = z.string().cuid().parse(id);
     const product = await db.product.findUnique({ where: { id: productId }, select: { name: true } });
     await db.product.delete({ where: { id: productId } });

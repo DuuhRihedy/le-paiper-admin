@@ -2,7 +2,7 @@
 
 import { z } from "zod";
 import { db } from "@/lib/db";
-import { requireAuth } from "@/lib/auth-guard";
+import { requireAuth, requireAdmin } from "@/lib/auth-guard";
 import { revalidatePath } from "next/cache";
 
 const settingSchema = z.object({
@@ -21,7 +21,7 @@ export async function getSettings() {
 }
 
 export async function updateSetting(key: string, value: string) {
-    await requireAuth();
+    await requireAdmin();
     const validated = settingSchema.parse({ key, value });
     await db.setting.upsert({
         where: { key: validated.key },
@@ -32,7 +32,7 @@ export async function updateSetting(key: string, value: string) {
 }
 
 export async function updateSettings(entries: { key: string; value: string }[]) {
-    await requireAuth();
+    await requireAdmin();
     const validated = z.array(settingSchema).parse(entries);
     for (const entry of validated) {
         await db.setting.upsert({

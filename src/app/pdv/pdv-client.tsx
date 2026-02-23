@@ -31,7 +31,8 @@ function formatCurrency(v: number) {
     return v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 }
 
-export function PdvClient({ products, clients }: { products: Product[]; clients: Client[] }) {
+export function PdvClient({ products, clients, role }: { products: Product[]; clients: Client[]; role: string }) {
+    const isViewer = role === "viewer";
     const [search, setSearch] = useState("");
     const [cart, setCart] = useState<CartItem[]>([]);
     const [payment, setPayment] = useState("pix");
@@ -112,6 +113,11 @@ export function PdvClient({ products, clients }: { products: Product[]; clients:
                 <p className="mt-1 text-sm text-foreground/50">
                     Selecione os produtos e finalize a venda
                 </p>
+                {isViewer && (
+                    <p className="mt-2 text-xs text-amber-600 bg-amber-100 dark:bg-amber-900/30 dark:text-amber-400 px-3 py-1.5 rounded-xl inline-block">
+                        🔒 Modo demonstração — somente visualização
+                    </p>
+                )}
             </motion.div>
 
             <div className="grid gap-6 xl:grid-cols-3">
@@ -139,8 +145,8 @@ export function PdvClient({ products, clients }: { products: Product[]; clients:
                                 >
                                     <Card
                                         hover
-                                        className={`cursor-pointer transition-all ${inCart ? "ring-2 ring-brand-purple" : ""}`}
-                                        onClick={() => addToCart(product)}
+                                        className={`cursor-pointer transition-all ${inCart ? "ring-2 ring-brand-purple" : ""} ${isViewer ? "pointer-events-none opacity-70" : ""}`}
+                                        onClick={() => !isViewer && addToCart(product)}
                                     >
                                         <CardContent className="p-4">
                                             <div className="flex items-start justify-between">
@@ -256,8 +262,8 @@ export function PdvClient({ products, clients }: { products: Product[]; clients:
                                                         key={m.id}
                                                         onClick={() => setPayment(m.id)}
                                                         className={`flex flex-col items-center gap-1 rounded-xl py-2.5 text-xs font-medium transition-all ${payment === m.id
-                                                                ? "bg-brand-purple text-white shadow-md"
-                                                                : "bg-surface border border-foreground/5 text-foreground/60 hover:border-brand-lilac/30"
+                                                            ? "bg-brand-purple text-white shadow-md"
+                                                            : "bg-surface border border-foreground/5 text-foreground/60 hover:border-brand-lilac/30"
                                                             }`}
                                                     >
                                                         <Icon className="h-4 w-4" />
@@ -276,8 +282,8 @@ export function PdvClient({ products, clients }: { products: Product[]; clients:
                                                 {formatCurrency(cartTotal)}
                                             </span>
                                         </div>
-                                        <Button onClick={handleFinish} disabled={isPending} className="w-full">
-                                            {isPending ? "Processando..." : "Finalizar Venda"}
+                                        <Button onClick={handleFinish} disabled={isPending || isViewer} className="w-full">
+                                            {isPending ? "Processando..." : isViewer ? "🔒 Somente Visualização" : "Finalizar Venda"}
                                         </Button>
                                     </div>
                                 </>

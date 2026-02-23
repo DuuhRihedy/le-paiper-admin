@@ -2,7 +2,7 @@
 
 import { z } from "zod";
 import { db } from "@/lib/db";
-import { requireAuth } from "@/lib/auth-guard";
+import { requireAuth, requireAdmin } from "@/lib/auth-guard";
 import { revalidatePath } from "next/cache";
 import { createAuditLog } from "@/lib/actions/audit";
 
@@ -24,7 +24,7 @@ export async function createClient(data: {
     email: string;
     phone: string;
 }) {
-    await requireAuth();
+    await requireAdmin();
     const validated = createClientSchema.parse(data);
     const client = await db.client.create({ data: validated });
     await createAuditLog({ action: "create", entity: "client", entityId: client.id, details: validated.name });
@@ -39,7 +39,7 @@ export async function updateClient(
         phone?: string;
     }
 ) {
-    await requireAuth();
+    await requireAdmin();
     const clientId = z.string().cuid().parse(id);
     const validated = updateClientSchema.parse(data);
     await db.client.update({ where: { id: clientId }, data: validated });
@@ -48,7 +48,7 @@ export async function updateClient(
 }
 
 export async function deleteClient(id: string) {
-    await requireAuth();
+    await requireAdmin();
     const clientId = z.string().cuid().parse(id);
     const client = await db.client.findUnique({ where: { id: clientId }, select: { name: true } });
     await db.client.delete({ where: { id: clientId } });

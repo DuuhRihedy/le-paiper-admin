@@ -24,6 +24,17 @@ async function main() {
     });
     console.log(`✅ User: ${admin.email}`);
 
+    // Demo viewer user (portfolio)
+    const demo = await prisma.user.create({
+        data: {
+            name: "Visitante Demo",
+            email: "demo@lepaiper.com",
+            password: hashSync("demo123", 10),
+            role: "viewer",
+        },
+    });
+    console.log(`✅ Demo: ${demo.email}`);
+
     // Products
     const productsData = [
         { name: "Caderno Kraft A5", category: "Cadernos", price: 45.9, cost: 22.0, stock: 34, minStock: 5, color: "#8B5CF6" },

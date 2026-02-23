@@ -1,28 +1,33 @@
-import { auth } from "@/lib/auth";
 import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
 
-export default auth((req) => {
-    const isLoggedIn = !!req.auth;
+export function middleware(req: NextRequest) {
     const { pathname } = req.nextUrl;
 
-    // Public routes that don't require authentication
+    // Allow auth API routes
+    if (pathname.startsWith("/api/auth")) return NextResponse.next();
+
+    // Public routes
     const publicRoutes = ["/login"];
     const isPublicRoute = publicRoutes.some((route) => pathname.startsWith(route));
-    const isAuthApi = pathname.startsWith("/api/auth");
 
-    if (isAuthApi) return NextResponse.next();
+    // Check for NextAuth session token (works with JWT strategy)
+    const token =
+        req.cookies.get("authjs.session-token")?.value ||
+        req.cookies.get("__Secure-authjs.session-token")?.value;
+
+    const isLoggedIn = !!token;
 
     if (!isLoggedIn && !isPublicRoute) {
         return NextResponse.redirect(new URL("/login", req.url));
     }
 
-    // Redirect logged-in users away from login
     if (isLoggedIn && isPublicRoute) {
         return NextResponse.redirect(new URL("/", req.url));
     }
 
     return NextResponse.next();
-});
+}
 
 export const config = {
     matcher: ["/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)"],

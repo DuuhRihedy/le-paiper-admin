@@ -4,6 +4,7 @@ import { compare } from "bcryptjs";
 import { db } from "@/lib/db";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
+    trustHost: true,
     providers: [
         Credentials({
             credentials: {
@@ -11,18 +12,23 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
                 password: { label: "Senha", type: "password" },
             },
             async authorize(credentials) {
-                const email = credentials?.email as string;
-                const password = credentials?.password as string;
+                try {
+                    const email = credentials?.email as string;
+                    const password = credentials?.password as string;
 
-                if (!email || !password) return null;
+                    if (!email || !password) return null;
 
-                const user = await db.user.findUnique({ where: { email } });
-                if (!user) return null;
+                    const user = await db.user.findUnique({ where: { email } });
+                    if (!user) return null;
 
-                const isValid = await compare(password, user.password);
-                if (!isValid) return null;
+                    const isValid = await compare(password, user.password);
+                    if (!isValid) return null;
 
-                return { id: user.id, name: user.name, email: user.email, role: user.role };
+                    return { id: user.id, name: user.name, email: user.email, role: user.role };
+                } catch (error) {
+                    console.error("[AUTH] Authorize error:", error);
+                    return null;
+                }
             },
         }),
     ],

@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { hasRouteAccess, getHomePage, type UserRole } from "@/lib/permissions";
 
-const VALID_ROLES = ["admin", "viewer"] as const;
+const VALID_ROLES = ["admin", "viewer", "vendedor"] as const;
 type Role = (typeof VALID_ROLES)[number];
 
 function parseRole(raw: unknown): Role {
@@ -23,7 +23,7 @@ export async function requireAuth() {
 export async function requireAdmin() {
     const session = await requireAuth();
     const role = parseRole((session.user as { role?: string }).role);
-    if (role !== "admin") {
+    if (role !== "admin" && role !== "vendedor") {
         throw new Error("Acesso negado: permissão insuficiente");
     }
     return session;

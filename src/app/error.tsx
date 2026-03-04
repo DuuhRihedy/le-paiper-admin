@@ -26,13 +26,8 @@ export default function GlobalError({
                     Algo deu errado
                 </h2>
                 <p className="max-w-md text-sm text-foreground/60">
-                    Ocorreu um erro inesperado. Tente novamente ou volte para a página inicial.
+                    Algo deu errado. Tente novamente.
                 </p>
-                {error.digest && (
-                    <p className="text-xs text-foreground/40 font-mono">
-                        Código: {error.digest}
-                    </p>
-                )}
             </motion.div>
             <div className="flex gap-3">
                 <Button onClick={reset} variant="default" className="gap-2">

@@ -1,11 +1,13 @@
 "use client";
 
+import { useMemo } from "react";
 import {
     DollarSign,
     ShoppingBag,
     Users,
     AlertTriangle,
     TrendingUp,
+    CheckCircle,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
@@ -21,9 +23,18 @@ type DashboardData = {
         id: string;
         total: number;
         paymentMethod: string;
+        clientName: string | null;
+        clientDeleted: boolean;
         createdAt: Date;
         client: { name: string } | null;
-        items: { quantity: number; product: { name: string } }[];
+        items: {
+            id: string;
+            quantity: number;
+            price: number;
+            productName: string | null;
+            productDeleted: boolean;
+            product: { name: string } | null;
+        }[];
     }[];
 };
 
@@ -45,8 +56,21 @@ function formatCurrency(value: number) {
     return value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 }
 
+function timeAgo(date: Date | string) {
+    const now = new Date();
+    const d = new Date(date);
+    const diffMs = now.getTime() - d.getTime();
+    const diffMin = Math.floor(diffMs / 60000);
+    if (diffMin < 1) return "agora";
+    if (diffMin < 60) return `há ${diffMin} min`;
+    const diffH = Math.floor(diffMin / 60);
+    if (diffH < 24) return `há ${diffH}h`;
+    const diffD = Math.floor(diffH / 24);
+    return `há ${diffD}d`;
+}
+
 export function DashboardClient({ data, role }: { data: DashboardData; role: string }) {
-    const summaryCards = [
+    const summaryCards = useMemo(() => [
         {
             title: "Faturamento",
             value: formatCurrency(data.revenue),
@@ -79,7 +103,7 @@ export function DashboardClient({ data, role }: { data: DashboardData; role: str
             iconBg: "bg-brand-pink/20",
             iconColor: "text-pink-600",
         },
-    ];
+    ], [data]);
 
     return (
         <div className="space-y-8">
@@ -182,6 +206,25 @@ export function DashboardClient({ data, role }: { data: DashboardData; role: str
                     </motion.div>
                 )}
 
+                {/* Empty Low Stock */}
+                {data.lowStock.length === 0 && (
+                    <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.4, duration: 0.5 }}
+                    >
+                        <Card>
+                            <CardContent className="flex flex-col items-center justify-center py-10">
+                                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-brand-mint/30">
+                                    <CheckCircle className="h-6 w-6 text-emerald-600" />
+                                </div>
+                                <p className="mt-3 text-sm font-medium text-foreground/60">Estoque em dia!</p>
+                                <p className="mt-1 text-xs text-foreground/40">Todos os produtos acima do mínimo</p>
+                            </CardContent>
+                        </Card>
+                    </motion.div>
+                )}
+
                 {/* Recent Sales */}
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}
@@ -204,6 +247,12 @@ export function DashboardClient({ data, role }: { data: DashboardData; role: str
                         </CardHeader>
                         <CardContent>
                             <div className="space-y-3">
+                                {data.recentSales.length === 0 && (
+                                    <div className="flex flex-col items-center py-8">
+                                        <ShoppingBag className="h-10 w-10 text-foreground/20" />
+                                        <p className="mt-3 text-sm text-foreground/40">Nenhuma venda recente</p>
+                                    </div>
+                                )}
                                 {data.recentSales.map((sale, i) => (
                                     <motion.div
                                         key={sale.id}
@@ -214,18 +263,20 @@ export function DashboardClient({ data, role }: { data: DashboardData; role: str
                                     >
                                         <div>
                                             <p className="text-sm font-medium">
-                                                {sale.client?.name || "Cliente avulso"}
+                                                {sale.clientDeleted
+                                                    ? <span className="text-foreground/40 italic">{sale.clientName} (excluído)</span>
+                                                    : sale.client?.name || "Cliente avulso"}
                                             </p>
                                             <p className="text-xs text-foreground/40">
-                                                {sale.items.map(i => i.product.name).join(", ")}
+                                                {sale.items.map(i => i.product?.name || <span key={i.productName} className="italic">{i.productName} (excluído)</span>).reduce((acc: React.ReactNode[], curr, idx) => idx === 0 ? [curr] : [...acc, ", ", curr], [] as React.ReactNode[])}
                                             </p>
                                         </div>
                                         <div className="text-right">
                                             <p className="text-sm font-semibold text-emerald-600">
-                                                {formatCurrency(sale.total)}
+                                                {formatCurrency(Number(sale.total))}
                                             </p>
                                             <p className="text-xs text-foreground/30">
-                                                {sale.paymentMethod.toUpperCase()}
+                                                {sale.paymentMethod.toUpperCase()} · {timeAgo(sale.createdAt)}
                                             </p>
                                         </div>
                                     </motion.div>

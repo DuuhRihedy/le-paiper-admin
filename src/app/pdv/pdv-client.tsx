@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
     Search, ShoppingCart, Plus, Minus, Trash2, CreditCard,
@@ -41,19 +41,20 @@ export function PdvClient({ products, clients, role }: { products: Product[]; cl
     const [showSuccess, setShowSuccess] = useState(false);
     const { toast } = useToast();
 
-    const filteredProducts = products.filter((p) =>
+    const filteredProducts = useMemo(() => products.filter((p) =>
         p.name.toLowerCase().includes(search.toLowerCase()) && p.stock > 0
-    );
+    ), [products, search]);
 
-    const cartTotal = cart.reduce((acc, item) => acc + item.price * item.quantity, 0);
-    const cartCount = cart.reduce((acc, item) => acc + item.quantity, 0);
+    const cartTotal = useMemo(() => cart.reduce((acc, item) => acc + Number(item.price) * item.quantity, 0), [cart]);
+    const cartCount = useMemo(() => cart.reduce((acc, item) => acc + item.quantity, 0), [cart]);
 
     function addToCart(product: Product) {
         setCart((prev) => {
             const existing = prev.find((i) => i.id === product.id);
             if (existing) {
                 if (existing.quantity >= product.stock) {
-                    toast("Estoque insuficiente", "warning");
+                    // Schedule toast outside of setState updater
+                    setTimeout(() => toast("Estoque insuficiente", "warning"), 0);
                     return prev;
                 }
                 return prev.map((i) => i.id === product.id ? { ...i, quantity: i.quantity + 1 } : i);
@@ -94,7 +95,7 @@ export function PdvClient({ products, clients, role }: { products: Product[]; cl
                 items: cart.map((i) => ({
                     productId: i.id,
                     quantity: i.quantity,
-                    price: i.price,
+                    price: Number(i.price),
                 })),
             });
             setCart([]);
@@ -165,7 +166,7 @@ export function PdvClient({ products, clients, role }: { products: Product[]; cl
                                             </div>
                                             <div className="mt-3 flex items-center justify-between">
                                                 <p className="text-lg font-bold text-brand-purple">
-                                                    {formatCurrency(product.price)}
+                                                    {formatCurrency(Number(product.price))}
                                                 </p>
                                                 <p className="text-xs text-foreground/40">{product.stock} un.</p>
                                             </div>
@@ -174,6 +175,13 @@ export function PdvClient({ products, clients, role }: { products: Product[]; cl
                                 </motion.div>
                             );
                         })}
+                        {filteredProducts.length === 0 && (
+                            <div className="col-span-full flex flex-col items-center py-12">
+                                <Package className="h-10 w-10 text-foreground/20" />
+                                <p className="mt-3 text-sm font-medium text-foreground/40">Nenhum produto encontrado</p>
+                                <p className="mt-1 text-xs text-foreground/30">Tente buscar por outro nome</p>
+                            </div>
+                        )}
                     </div>
                 </div>
 
@@ -198,11 +206,13 @@ export function PdvClient({ products, clients, role }: { products: Product[]; cl
                         <CardContent className="space-y-4">
                             {/* Client selector */}
                             <div>
-                                <label className="mb-1 block text-xs font-medium text-foreground/60">Cliente (opcional)</label>
+                                <label htmlFor="client-select" className="mb-1 block text-xs font-medium text-foreground/60">Cliente (opcional)</label>
                                 <select
+                                    id="client-select"
                                     value={selectedClient}
                                     onChange={(e) => setSelectedClient(e.target.value)}
-                                    className="flex h-10 w-full rounded-2xl border border-border-glass bg-surface px-3 text-sm"
+                                    className="flex h-10 w-full appearance-none rounded-2xl border border-border-glass bg-surface px-3 pr-8 text-sm text-foreground transition-all focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-purple"
+                                    style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%239ca3af' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 10px center' }}
                                 >
                                     <option value="">Cliente avulso</option>
                                     {clients.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
@@ -222,21 +232,21 @@ export function PdvClient({ products, clients, role }: { products: Product[]; cl
                                         >
                                             <div className="flex-1 min-w-0">
                                                 <p className="text-sm font-medium truncate">{item.name}</p>
-                                                <p className="text-xs text-foreground/40">{formatCurrency(item.price)}</p>
+                                                <p className="text-xs text-foreground/40">{formatCurrency(Number(item.price))}</p>
                                             </div>
                                             <div className="flex items-center gap-1">
-                                                <button onClick={() => updateQuantity(item.id, -1)} className="rounded-lg p-1 text-foreground/40 hover:bg-foreground/5">
+                                                <button onClick={() => updateQuantity(item.id, -1)} aria-label="Diminuir quantidade" className="rounded-lg p-2 text-foreground/40 hover:bg-brand-lilac/15 hover:text-brand-purple transition-colors">
                                                     <Minus className="h-3.5 w-3.5" />
                                                 </button>
                                                 <span className="w-6 text-center text-sm font-medium">{item.quantity}</span>
-                                                <button onClick={() => updateQuantity(item.id, 1)} className="rounded-lg p-1 text-foreground/40 hover:bg-foreground/5">
+                                                <button onClick={() => updateQuantity(item.id, 1)} aria-label="Aumentar quantidade" className="rounded-lg p-2 text-foreground/40 hover:bg-brand-lilac/15 hover:text-brand-purple transition-colors">
                                                     <Plus className="h-3.5 w-3.5" />
                                                 </button>
                                             </div>
                                             <p className="text-sm font-semibold w-20 text-right">
-                                                {formatCurrency(item.price * item.quantity)}
+                                                {formatCurrency(Number(item.price) * item.quantity)}
                                             </p>
-                                            <button onClick={() => removeFromCart(item.id)} className="rounded-lg p-1 text-foreground/30 hover:text-pink-600">
+                                            <button onClick={() => removeFromCart(item.id)} aria-label="Remover item" className="rounded-lg p-2 text-foreground/30 hover:bg-pink-100 hover:text-pink-600 dark:hover:bg-pink-950/30 transition-colors">
                                                 <Trash2 className="h-3.5 w-3.5" />
                                             </button>
                                         </motion.div>

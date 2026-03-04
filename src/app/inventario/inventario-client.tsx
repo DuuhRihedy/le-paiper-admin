@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Plus, Search, Pencil, Trash2, Package, X } from "lucide-react";
+import { Plus, Search, Pencil, Trash2, Package, X, AlertTriangle } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -36,23 +36,24 @@ export function InventarioClient({ products, role }: { products: Product[]; role
     const [showForm, setShowForm] = useState(false);
     const [editingId, setEditingId] = useState<string | null>(null);
     const [form, setForm] = useState(emptyForm);
+    const [deleteConfirm, setDeleteConfirm] = useState<{ id: string; name: string } | null>(null);
     const [isPending, startTransition] = useTransition();
     const { toast } = useToast();
 
-    const filtered = products.filter((p) => {
+    const filtered = useMemo(() => products.filter((p) => {
         const term = search.toLowerCase();
         const matchSearch = p.name.toLowerCase().includes(term) || (p.sku && p.sku.toLowerCase().includes(term));
         const matchFilter = filter === "Todos" || p.category === filter;
         return matchSearch && matchFilter;
-    });
+    }), [products, search, filter]);
 
     function openEdit(product: Product) {
         setForm({
             name: product.name,
             sku: product.sku ?? "",
             category: product.category,
-            price: product.price,
-            cost: product.cost,
+            price: Number(product.price),
+            cost: Number(product.cost),
             stock: product.stock,
             minStock: product.minStock,
             color: product.color,
@@ -86,10 +87,20 @@ export function InventarioClient({ products, role }: { products: Product[]; role
         });
     }
 
-    function handleDelete(id: string) {
+    function confirmDelete(product: Product) {
+        setDeleteConfirm({ id: product.id, name: product.name });
+    }
+
+    function handleDelete() {
+        if (!deleteConfirm) return;
         startTransition(async () => {
-            await deleteProduct(id);
-            toast("Produto removido", "info");
+            const result = await deleteProduct(deleteConfirm.id);
+            if (result?.error) {
+                toast(result.error, "error");
+            } else {
+                toast("Produto removido", "info");
+            }
+            setDeleteConfirm(null);
         });
     }
 
@@ -190,7 +201,7 @@ export function InventarioClient({ products, role }: { products: Product[]; role
                                         </td>
                                         <td className="px-4 py-3 text-foreground/60">{product.category}</td>
                                         <td className="px-4 py-3 text-right font-medium">
-                                            R$ {product.price.toFixed(2)}
+                                            R$ {Number(product.price).toFixed(2)}
                                         </td>
                                         <td className="px-4 py-3 text-center">
                                             <Badge variant={product.stock <= product.minStock ? "pink" : "mint"}>
@@ -202,13 +213,15 @@ export function InventarioClient({ products, role }: { products: Product[]; role
                                                 <div className="flex items-center justify-end gap-1">
                                                     <button
                                                         onClick={() => openEdit(product)}
+                                                        aria-label="Editar produto"
                                                         className="rounded-lg p-2 text-foreground/40 transition-colors hover:bg-brand-lilac/10 hover:text-brand-purple"
                                                     >
                                                         <Pencil className="h-4 w-4" />
                                                     </button>
                                                     <button
-                                                        onClick={() => handleDelete(product.id)}
+                                                        onClick={() => confirmDelete(product)}
                                                         disabled={isPending}
+                                                        aria-label="Excluir produto"
                                                         className="rounded-lg p-2 text-foreground/40 transition-colors hover:bg-pink-100 hover:text-pink-600 dark:hover:bg-pink-950"
                                                     >
                                                         <Trash2 className="h-4 w-4" />
@@ -218,6 +231,15 @@ export function InventarioClient({ products, role }: { products: Product[]; role
                                         )}
                                     </motion.tr>
                                 ))}
+                                {filtered.length === 0 && (
+                                    <tr>
+                                        <td colSpan={isViewer ? 4 : 5} className="px-4 py-12 text-center">
+                                            <Package className="mx-auto mb-3 h-10 w-10 text-foreground/20" />
+                                            <p className="text-sm font-medium text-foreground/40">Nenhum produto encontrado</p>
+                                            <p className="mt-1 text-xs text-foreground/30">Tente alterar os filtros ou buscar por outro nome</p>
+                                        </td>
+                                    </tr>
+                                )}
                             </tbody>
                         </table>
                     </div>
@@ -245,15 +267,15 @@ export function InventarioClient({ products, role }: { products: Product[]; role
                                 <h2 className="text-lg font-semibold">
                                     {editingId ? "Editar Produto" : "Novo Produto"}
                                 </h2>
-                                <button onClick={() => setShowForm(false)} className="rounded-lg p-1 text-foreground/40 hover:text-foreground">
+                                <button onClick={() => setShowForm(false)} aria-label="Fechar modal" className="rounded-lg p-1 text-foreground/40 hover:text-foreground">
                                     <X className="h-5 w-5" />
                                 </button>
                             </div>
 
                             <div className="space-y-4">
                                 <div>
-                                    <label className="mb-1 block text-xs font-medium text-foreground/60">Nome</label>
-                                    <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
+                                    <label htmlFor="product-name" className="mb-1 block text-xs font-medium text-foreground/60">Nome</label>
+                                    <Input id="product-name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
                                 </div>
                                 <div>
                                     <label className="mb-1 block text-xs font-medium text-foreground/60">SKU (código)</label>
@@ -261,18 +283,20 @@ export function InventarioClient({ products, role }: { products: Product[]; role
                                 </div>
                                 <div className="grid grid-cols-2 gap-4">
                                     <div>
-                                        <label className="mb-1 block text-xs font-medium text-foreground/60">Categoria</label>
+                                        <label htmlFor="product-category" className="mb-1 block text-xs font-medium text-foreground/60">Categoria</label>
                                         <select
+                                            id="product-category"
                                             value={form.category}
                                             onChange={(e) => setForm({ ...form, category: e.target.value })}
-                                            className="flex h-10 w-full rounded-2xl border border-border-glass bg-surface px-3 text-sm"
+                                            className="flex h-10 w-full appearance-none rounded-2xl border border-border-glass bg-surface px-3 pr-8 text-sm text-foreground transition-all focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-purple"
+                                            style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%239ca3af' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 10px center' }}
                                         >
                                             {categories.map((c) => <option key={c} value={c}>{c}</option>)}
                                         </select>
                                     </div>
                                     <div>
-                                        <label className="mb-1 block text-xs font-medium text-foreground/60">Cor</label>
-                                        <div className="flex gap-2">
+                                        <label htmlFor="product-color" className="mb-1 block text-xs font-medium text-foreground/60">Cor</label>
+                                        <div id="product-color" className="flex gap-2">
                                             {colors.map((c) => (
                                                 <button
                                                     key={c}
@@ -286,22 +310,22 @@ export function InventarioClient({ products, role }: { products: Product[]; role
                                 </div>
                                 <div className="grid grid-cols-2 gap-4">
                                     <div>
-                                        <label className="mb-1 block text-xs font-medium text-foreground/60">Preço (R$)</label>
-                                        <Input type="number" step="0.01" value={form.price} onChange={(e) => setForm({ ...form, price: Number(e.target.value) })} />
+                                        <label htmlFor="product-price" className="mb-1 block text-xs font-medium text-foreground/60">Preço (R$)</label>
+                                        <Input id="product-price" type="number" step="0.01" min="0" value={form.price} onChange={(e) => setForm({ ...form, price: Number(e.target.value) })} />
                                     </div>
                                     <div>
-                                        <label className="mb-1 block text-xs font-medium text-foreground/60">Custo (R$)</label>
-                                        <Input type="number" step="0.01" value={form.cost} onChange={(e) => setForm({ ...form, cost: Number(e.target.value) })} />
+                                        <label htmlFor="product-cost" className="mb-1 block text-xs font-medium text-foreground/60">Custo (R$)</label>
+                                        <Input id="product-cost" type="number" step="0.01" min="0" value={form.cost} onChange={(e) => setForm({ ...form, cost: Number(e.target.value) })} />
                                     </div>
                                 </div>
                                 <div className="grid grid-cols-2 gap-4">
                                     <div>
-                                        <label className="mb-1 block text-xs font-medium text-foreground/60">Estoque</label>
-                                        <Input type="number" value={form.stock} onChange={(e) => setForm({ ...form, stock: Number(e.target.value) })} />
+                                        <label htmlFor="product-stock" className="mb-1 block text-xs font-medium text-foreground/60">Estoque</label>
+                                        <Input id="product-stock" type="number" min="0" value={form.stock} onChange={(e) => setForm({ ...form, stock: Number(e.target.value) })} />
                                     </div>
                                     <div>
-                                        <label className="mb-1 block text-xs font-medium text-foreground/60">Estoque Mínimo</label>
-                                        <Input type="number" value={form.minStock} onChange={(e) => setForm({ ...form, minStock: Number(e.target.value) })} />
+                                        <label htmlFor="product-minstock" className="mb-1 block text-xs font-medium text-foreground/60">Estoque Mínimo</label>
+                                        <Input id="product-minstock" type="number" min="0" value={form.minStock} onChange={(e) => setForm({ ...form, minStock: Number(e.target.value) })} />
                                     </div>
                                 </div>
                             </div>
@@ -312,6 +336,45 @@ export function InventarioClient({ products, role }: { products: Product[]; role
                                 </Button>
                                 <Button onClick={handleSave} disabled={isPending} className="flex-1">
                                     {isPending ? "Salvando..." : "Salvar"}
+                                </Button>
+                            </div>
+                        </motion.div>
+                    </>
+                )}
+            </AnimatePresence>
+
+            {/* Popup de Confirmação de Exclusão */}
+            <AnimatePresence>
+                {deleteConfirm && (
+                    <>
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            className="fixed inset-0 z-50 bg-black/30 backdrop-blur-sm"
+                            onClick={() => setDeleteConfirm(null)}
+                        />
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                            animate={{ opacity: 1, scale: 1, y: 0 }}
+                            exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                            className="fixed inset-x-4 top-[25%] z-50 mx-auto max-w-sm rounded-2xl border border-border-glass bg-surface-elevated p-6 shadow-2xl sm:inset-x-auto"
+                        >
+                            <div className="mb-4 flex flex-col items-center gap-3 text-center">
+                                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-red-100 dark:bg-red-950/40">
+                                    <AlertTriangle className="h-6 w-6 text-red-600 dark:text-red-400" />
+                                </div>
+                                <h2 className="text-lg font-semibold">Excluir Produto</h2>
+                                <p className="text-sm text-foreground/60">
+                                    Deseja realmente excluir <strong>{deleteConfirm.name}</strong>? Esta ação não pode ser desfeita.
+                                </p>
+                            </div>
+                            <div className="flex gap-3">
+                                <Button variant="ghost" onClick={() => setDeleteConfirm(null)} className="flex-1">
+                                    Cancelar
+                                </Button>
+                                <Button variant="destructive" onClick={handleDelete} disabled={isPending} className="flex-1">
+                                    {isPending ? "Excluindo..." : "Excluir"}
                                 </Button>
                             </div>
                         </motion.div>

@@ -57,6 +57,7 @@ export async function updateProduct(
 ) {
     await requireAdmin();
     const validated = updateProductSchema.parse(data);
+    if (Object.keys(validated).length === 0) return;
     const productId = z.string().cuid().parse(id);
     await db.product.update({ where: { id: productId }, data: validated });
     await createAuditLog({ action: "update", entity: "product", entityId: productId });
@@ -64,12 +65,30 @@ export async function updateProduct(
     revalidatePath("/pdv");
 }
 
-export async function deleteProduct(id: string) {
+export async function deleteProduct(id: string): Promise<{ error?: string }> {
     await requireAdmin();
     const productId = z.string().cuid().parse(id);
-    const product = await db.product.findUnique({ where: { id: productId }, select: { name: true } });
-    await db.product.delete({ where: { id: productId } });
-    await createAuditLog({ action: "delete", entity: "product", entityId: productId, details: product?.name });
+    const product = await db.product.findUnique({
+        where: { id: productId },
+        select: { name: true },
+    });
+    if (!product) return { error: "Produto não encontrado" };
+
+    // Atomic: mark sale items + delete product in single transaction
+    await db.$transaction(async (tx) => {
+        await tx.saleItem.updateMany({
+            where: { productId },
+            data: { productName: product.name, productDeleted: true },
+        });
+        await tx.product.delete({ where: { id: productId } });
+    });
+
+    try {
+        await createAuditLog({ action: "delete", entity: "product", entityId: productId, details: product.name });
+    } catch {
+        // Audit failure should not break the operation
+    }
     revalidatePath("/inventario");
     revalidatePath("/pdv");
+    return {};
 }

@@ -15,8 +15,7 @@ export async function getDashboardData() {
         include: { items: true },
     });
 
-    let revenue = 0;
-    for (const s of salesLast30) revenue += s.total;
+    const revenue = salesLast30.reduce((acc, s) => acc + Number(s.total), 0);
     const totalSales = salesLast30.length;
     const avgTicket = totalSales > 0 ? revenue / totalSales : 0;
 
@@ -25,40 +24,33 @@ export async function getDashboardData() {
         where: { joinDate: { gte: thirtyDaysAgo } },
     });
 
-    // Low stock products — query directly in the DB
-    const lowStock = await db.product.findMany({
-        where: {
-            stock: { lte: 5 },
-        },
-        orderBy: { stock: "asc" },
-        take: 5,
-    });
-
-    // For more accurate filtering, we post-filter products where stock <= minStock
-    // SQLite doesn't support column-to-column comparison in WHERE easily with Prisma,
-    // so we fetch a reasonable set and then filter
-    const lowStockFiltered = lowStock.filter((p: { stock: number; minStock: number }) => p.stock <= p.minStock);
-
-    // If we didn't get enough, fetch more with a broader scope
-    let finalLowStock = lowStockFiltered;
-    if (lowStockFiltered.length < 5) {
-        const allLowish = await db.product.findMany({
-            where: { stock: { lte: 20 } },
-            orderBy: { stock: "asc" },
-            take: 20,
-        });
-        finalLowStock = allLowish
-            .filter((p: { stock: number; minStock: number }) => p.stock <= p.minStock)
-            .slice(0, 5);
-    }
+    // Low stock products — PostgreSQL supports column-to-column comparison via raw query
+    const finalLowStock = await db.$queryRaw<
+        { id: string; name: string; stock: number; minStock: number; color: string }[]
+    >`SELECT id, name, stock, "minStock", color FROM "Product" WHERE stock <= "minStock" ORDER BY stock ASC LIMIT 5`;
 
     // Recent sales
     const recentSales = await db.sale.findMany({
         take: 5,
         orderBy: { createdAt: "desc" },
-        include: {
+        select: {
+            id: true,
+            total: true,
+            paymentMethod: true,
+            clientName: true,
+            clientDeleted: true,
+            createdAt: true,
             client: { select: { name: true } },
-            items: { include: { product: { select: { name: true } } } },
+            items: {
+                select: {
+                    id: true,
+                    quantity: true,
+                    price: true,
+                    productName: true,
+                    productDeleted: true,
+                    product: { select: { name: true } },
+                },
+            },
         },
     });
 

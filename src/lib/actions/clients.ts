@@ -40,18 +40,37 @@ export async function updateClient(
     }
 ) {
     await requireAdmin();
-    const clientId = z.string().cuid().parse(id);
     const validated = updateClientSchema.parse(data);
+    if (Object.keys(validated).length === 0) return;
+    const clientId = z.string().cuid().parse(id);
     await db.client.update({ where: { id: clientId }, data: validated });
     await createAuditLog({ action: "update", entity: "client", entityId: clientId });
     revalidatePath("/clientes");
 }
 
-export async function deleteClient(id: string) {
+export async function deleteClient(id: string): Promise<{ error?: string }> {
     await requireAdmin();
     const clientId = z.string().cuid().parse(id);
-    const client = await db.client.findUnique({ where: { id: clientId }, select: { name: true } });
-    await db.client.delete({ where: { id: clientId } });
-    await createAuditLog({ action: "delete", entity: "client", entityId: clientId, details: client?.name });
+    const client = await db.client.findUnique({
+        where: { id: clientId },
+        select: { name: true },
+    });
+    if (!client) return { error: "Cliente não encontrado" };
+
+    // Atomic: mark sales + delete client in single transaction
+    await db.$transaction(async (tx) => {
+        await tx.sale.updateMany({
+            where: { clientId },
+            data: { clientName: client.name, clientDeleted: true },
+        });
+        await tx.client.delete({ where: { id: clientId } });
+    });
+
+    try {
+        await createAuditLog({ action: "delete", entity: "client", entityId: clientId, details: client.name });
+    } catch {
+        // Audit failure should not break the operation
+    }
     revalidatePath("/clientes");
+    return {};
 }

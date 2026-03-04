@@ -7,8 +7,8 @@
   --foreground: #121212;
   --surface: rgba(255, 255, 255, 0.7);
   --surface-elevated: rgba(255, 255, 255, 0.9);
-  --border: rgba(255, 255, 255, 0.4);
-  --border-subtle: rgba(255, 255, 255, 0.2);
+  --border: rgba(0, 0, 0, 0.08);
+  --border-subtle: rgba(0, 0, 0, 0.05);
   --brand-purple: #7e4aa8;
   --brand-lilac: #cdb4f6;
   --brand-pink: #e79acd;

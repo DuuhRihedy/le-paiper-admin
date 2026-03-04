@@ -3,7 +3,15 @@ import { hashSync } from "bcryptjs";
 
 const prisma = new PrismaClient();
 
+const BCRYPT_ROUNDS = 12;
+
 async function main() {
+    // Safety: prevent accidental execution in production
+    if (process.env.NODE_ENV === "production") {
+        console.error("❌ Seed script cannot run in production. Set NODE_ENV=development.");
+        process.exit(1);
+    }
+
     console.log("🌱 Seeding database...");
 
     // Clean existing data
@@ -18,7 +26,7 @@ async function main() {
         data: {
             name: "Le Paiper Admin",
             email: "admin@lepaiper.com",
-            password: hashSync("lepaiper123", 10),
+            password: hashSync("lepaiper123", BCRYPT_ROUNDS),
             role: "admin",
         },
     });
@@ -29,7 +37,7 @@ async function main() {
         data: {
             name: "Visitante Demo",
             email: "demo@lepaiper.com",
-            password: hashSync("demo123", 10),
+            password: hashSync("demo123", BCRYPT_ROUNDS),
             role: "viewer",
         },
     });
@@ -108,9 +116,9 @@ async function main() {
         const saleItems = s.items.map((item) => ({
             productId: products[item.prodIdx].id,
             quantity: item.qty,
-            price: products[item.prodIdx].price,
+            price: Number(products[item.prodIdx].price),
         }));
-        const total = saleItems.reduce((acc, si) => acc + si.price * si.quantity, 0);
+        const total = saleItems.reduce((acc, si) => acc + Number(si.price) * si.quantity, 0);
 
         await prisma.sale.create({
             data: {

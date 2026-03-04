@@ -17,7 +17,9 @@ export async function getReportsData(days = 30) {
     const sales = await db.sale.findMany({
         where: { createdAt: { gte: startDate } },
         include: {
-            items: { include: { product: { select: { name: true, category: true, cost: true } } } },
+            items: {
+                include: { product: { select: { name: true, category: true, cost: true } } },
+            },
         },
         orderBy: { createdAt: "asc" },
     });
@@ -27,9 +29,9 @@ export async function getReportsData(days = 30) {
     for (const sale of sales) {
         const day = sale.createdAt.toISOString().split("T")[0];
         if (!revenueByDay[day]) revenueByDay[day] = { revenue: 0, cost: 0 };
-        revenueByDay[day].revenue += sale.total;
+        revenueByDay[day].revenue += Number(sale.total);
         for (const item of sale.items) {
-            revenueByDay[day].cost += item.product.cost * item.quantity;
+            revenueByDay[day].cost += Number(item.product?.cost ?? 0) * item.quantity;
         }
     }
 
@@ -43,7 +45,7 @@ export async function getReportsData(days = 30) {
     const categoryMap: Record<string, number> = {};
     for (const sale of sales) {
         for (const item of sale.items) {
-            const cat = item.product.category;
+            const cat = item.product?.category ?? "Produto excluído";
             categoryMap[cat] = (categoryMap[cat] || 0) + item.quantity;
         }
     }
@@ -65,10 +67,10 @@ export async function getReportsData(days = 30) {
     const productMap: Record<string, { name: string; quantity: number; revenue: number }> = {};
     for (const sale of sales) {
         for (const item of sale.items) {
-            const key = item.product.name;
+            const key = item.product?.name ?? item.productName ?? "Produto excluído";
             if (!productMap[key]) productMap[key] = { name: key, quantity: 0, revenue: 0 };
             productMap[key].quantity += item.quantity;
-            productMap[key].revenue += item.price * item.quantity;
+            productMap[key].revenue += Number(item.price) * item.quantity;
         }
     }
     const topProducts = Object.values(productMap)
@@ -76,8 +78,7 @@ export async function getReportsData(days = 30) {
         .slice(0, 5);
 
     // KPIs
-    let totalRevenue = 0;
-    for (const s of sales) totalRevenue += s.total;
+    const totalRevenue = sales.reduce((acc, s) => acc + Number(s.total), 0);
     const totalOrders = sales.length;
     const avgTicket = totalOrders > 0 ? totalRevenue / totalOrders : 0;
     const totalClients = await db.client.count();

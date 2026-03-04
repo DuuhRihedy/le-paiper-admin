@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { ThemeProvider } from "@/components/theme-provider";
 import { ToastProvider } from "@/components/ui/toast";
+import { AuthProvider } from "@/components/auth-provider";
 import { DashboardLayout } from "@/components/layout/dashboard-layout";
 import { RoleProvider } from "@/components/providers/role-provider";
 import { getUserRole } from "@/lib/auth-guard";
@@ -52,13 +53,15 @@ export default async function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
         suppressHydrationWarning
       >
-        <ThemeProvider>
-          <ToastProvider>
-            <RoleProvider role={role}>
-              <DashboardLayout>{children}</DashboardLayout>
-            </RoleProvider>
-          </ToastProvider>
-        </ThemeProvider>
+        <AuthProvider>
+          <ThemeProvider>
+            <ToastProvider>
+              <RoleProvider role={role}>
+                <DashboardLayout>{children}</DashboardLayout>
+              </RoleProvider>
+            </ToastProvider>
+          </ThemeProvider>
+        </AuthProvider>
       </body>
     </html>
   );

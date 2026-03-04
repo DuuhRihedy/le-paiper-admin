@@ -1,10 +1,12 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import { Bell, ChevronRight, LayoutDashboard } from "lucide-react";
+import { Bell, ChevronRight, LayoutDashboard, LogOut } from "lucide-react";
 import { useState } from "react";
+import { signOut } from "next-auth/react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { useRole } from "@/components/providers/role-provider";
 
 const breadcrumbMap: Record<string, string> = {
     "/": "Dashboard",
@@ -13,6 +15,7 @@ const breadcrumbMap: Record<string, string> = {
     "/clientes": "Clientes",
     "/relatorios": "Relatórios",
     "/configuracoes": "Configurações",
+    "/bem-vindo": "Início",
 };
 
 const mockNotifications = [
@@ -22,9 +25,17 @@ const mockNotifications = [
     { id: 4, text: "Pedro Santos atingiu o tier Ouro!", time: "3h", unread: false },
 ];
 
+const roleLabels: Record<string, string> = {
+    admin: "Admin",
+    viewer: "Viewer",
+    vendedor: "Vendedor",
+};
+
 export function Header() {
     const pathname = usePathname();
     const [notifOpen, setNotifOpen] = useState(false);
+    const [userMenuOpen, setUserMenuOpen] = useState(false);
+    const role = useRole();
     const unreadCount = mockNotifications.filter((n) => n.unread).length;
 
     const currentPage = breadcrumbMap[pathname] || "Página";
@@ -102,15 +113,49 @@ export function Header() {
                 </div>
 
                 {/* User Avatar */}
-                <button className="flex items-center gap-2.5 rounded-xl px-2 py-1.5 transition-colors hover:bg-brand-lilac/10">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-brand-purple to-brand-pink text-xs font-bold text-white">
-                        LP
-                    </div>
-                    <div className="hidden text-left sm:block">
-                        <p className="text-sm font-medium leading-tight">Le Paiper</p>
-                        <p className="text-[11px] text-foreground/40">Admin</p>
-                    </div>
-                </button>
+                <div className="relative">
+                    <button
+                        onClick={() => setUserMenuOpen(!userMenuOpen)}
+                        className="flex items-center gap-2.5 rounded-xl px-2 py-1.5 transition-colors hover:bg-brand-lilac/10"
+                    >
+                        <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-brand-purple to-brand-pink text-xs font-bold text-white">
+                            LP
+                        </div>
+                        <div className="hidden text-left sm:block">
+                            <p className="text-sm font-medium leading-tight">Le Paiper</p>
+                            <p className="text-[11px] text-foreground/40">{roleLabels[role] ?? "Admin"}</p>
+                        </div>
+                    </button>
+
+                    <AnimatePresence>
+                        {userMenuOpen && (
+                            <>
+                                <motion.div
+                                    initial={{ opacity: 0 }}
+                                    animate={{ opacity: 1 }}
+                                    exit={{ opacity: 0 }}
+                                    className="fixed inset-0 z-40"
+                                    onClick={() => setUserMenuOpen(false)}
+                                />
+                                <motion.div
+                                    initial={{ opacity: 0, y: 8, scale: 0.96 }}
+                                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                                    exit={{ opacity: 0, y: 8, scale: 0.96 }}
+                                    transition={{ duration: 0.15 }}
+                                    className="absolute right-0 top-12 z-50 w-48 overflow-hidden rounded-2xl border border-border-subtle bg-surface-elevated shadow-xl"
+                                >
+                                    <button
+                                        onClick={() => signOut({ callbackUrl: "/login" })}
+                                        className="flex w-full items-center gap-2.5 px-4 py-3 text-sm font-medium text-red-500 transition-colors hover:bg-red-50 dark:hover:bg-red-950/30"
+                                    >
+                                        <LogOut className="h-4 w-4" />
+                                        Sair
+                                    </button>
+                                </motion.div>
+                            </>
+                        )}
+                    </AnimatePresence>
+                </div>
             </div>
         </header>
     );

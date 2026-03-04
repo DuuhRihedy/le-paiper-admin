@@ -12,11 +12,15 @@ import {
     Settings,
     Menu,
     X,
+    Home,
 } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { motion, AnimatePresence } from "framer-motion";
+import { useRole } from "@/components/providers/role-provider";
+import { getAllowedRoutes } from "@/lib/permissions";
 
 const navItems = [
+    { href: "/bem-vindo", label: "Início", icon: Home },
     { href: "/", label: "Dashboard", icon: LayoutDashboard },
     { href: "/inventario", label: "Inventário", icon: Package },
     { href: "/pdv", label: "Nova Venda", icon: ShoppingCart },
@@ -28,10 +32,13 @@ const navItems = [
 export function Sidebar() {
     const pathname = usePathname();
     const [mobileOpen, setMobileOpen] = useState(false);
+    const role = useRole();
+    const allowedRoutes = getAllowedRoutes(role);
+    const filteredItems = navItems.filter((item) => allowedRoutes.includes(item.href));
 
     const navContent = (
         <nav className="flex flex-col gap-1">
-            {navItems.map((item, i) => {
+            {filteredItems.map((item, i) => {
                 const isActive = pathname === item.href;
                 const Icon = item.icon;
                 return (

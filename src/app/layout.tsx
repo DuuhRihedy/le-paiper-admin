@@ -3,6 +3,9 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { ThemeProvider } from "@/components/theme-provider";
 import { ToastProvider } from "@/components/ui/toast";
 import { DashboardLayout } from "@/components/layout/dashboard-layout";
+import { RoleProvider } from "@/components/providers/role-provider";
+import { getUserRole } from "@/lib/auth-guard";
+import type { UserRole } from "@/lib/permissions";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -20,11 +23,13 @@ export const metadata: Metadata = {
   description: "Painel administrativo da papelaria premium Le Paiper",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const role: UserRole = (await getUserRole()) ?? "admin";
+
   return (
     <html lang="pt-BR" suppressHydrationWarning>
       <head>
@@ -49,7 +54,9 @@ export default function RootLayout({
       >
         <ThemeProvider>
           <ToastProvider>
-            <DashboardLayout>{children}</DashboardLayout>
+            <RoleProvider role={role}>
+              <DashboardLayout>{children}</DashboardLayout>
+            </RoleProvider>
           </ToastProvider>
         </ThemeProvider>
       </body>

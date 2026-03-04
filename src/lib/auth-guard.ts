@@ -2,6 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
+import { hasRouteAccess, getHomePage, type UserRole } from "@/lib/permissions";
 
 export async function requireAuth() {
     const session = await auth();
@@ -18,8 +19,20 @@ export async function requireAdmin() {
     return session;
 }
 
-export async function getUserRole() {
+export async function getUserRole(): Promise<UserRole | null> {
     const session = await auth();
     if (!session?.user) return null;
-    return (session.user as { role?: string }).role ?? "admin";
+    return ((session.user as { role?: string }).role ?? "admin") as UserRole;
+}
+
+// Verifica autenticação e permissão de acesso à rota
+export async function requireRouteAccess(pathname: string) {
+    const session = await requireAuth();
+    const role = ((session.user as { role?: string }).role ?? "admin") as UserRole;
+
+    if (!hasRouteAccess(role, pathname)) {
+        redirect(getHomePage(role));
+    }
+
+    return session;
 }

@@ -20,6 +20,7 @@ model User {
 model Product {
   id        String     @id @default(cuid())
   name      String
+  sku       String?
   category  String
   price     Float
   cost      Float
@@ -27,6 +28,7 @@ model Product {
   minStock  Int        @default(5)
   color     String     @default("#8B5CF6")
   createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
   saleItems SaleItem[]
 }
 

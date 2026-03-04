@@ -8,6 +8,7 @@ import { createAuditLog } from "@/lib/actions/audit";
 
 const createProductSchema = z.object({
     name: z.string().min(1, "Nome é obrigatório").max(200),
+    sku: z.string().max(50).transform((v) => v || undefined).optional(),
     category: z.string().min(1, "Categoria é obrigatória").max(100),
     price: z.number().positive("Preço deve ser positivo"),
     cost: z.number().nonnegative("Custo não pode ser negativo"),
@@ -25,6 +26,7 @@ export async function getProducts() {
 
 export async function createProduct(data: {
     name: string;
+    sku?: string;
     category: string;
     price: number;
     cost: number;
@@ -44,6 +46,7 @@ export async function updateProduct(
     id: string,
     data: {
         name?: string;
+        sku?: string;
         category?: string;
         price?: number;
         cost?: number;

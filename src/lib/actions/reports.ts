@@ -76,7 +76,8 @@ export async function getReportsData(days = 30) {
         .slice(0, 5);
 
     // KPIs
-    const totalRevenue = sales.reduce((acc, s) => acc + s.total, 0);
+    let totalRevenue = 0;
+    for (const s of sales) totalRevenue += s.total;
     const totalOrders = sales.length;
     const avgTicket = totalOrders > 0 ? totalRevenue / totalOrders : 0;
     const totalClients = await db.client.count();

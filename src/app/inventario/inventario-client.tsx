@@ -13,6 +13,7 @@ import { createProduct, updateProduct, deleteProduct } from "@/lib/actions/produ
 type Product = {
     id: string;
     name: string;
+    sku: string | null;
     category: string;
     price: number;
     cost: number;
@@ -25,7 +26,7 @@ const categories = ["Cadernos", "Canetas", "Acessórios", "Tintas", "Papéis"];
 const colors = ["#8B5CF6", "#EC4899", "#F59E0B", "#14B8A6", "#6366F1", "#06B6D4"];
 
 const emptyForm = {
-    name: "", category: "Cadernos", price: 0, cost: 0, stock: 0, minStock: 5, color: "#8B5CF6",
+    name: "", sku: "", category: "Cadernos", price: 0, cost: 0, stock: 0, minStock: 5, color: "#8B5CF6",
 };
 
 export function InventarioClient({ products, role }: { products: Product[]; role: string }) {
@@ -39,7 +40,8 @@ export function InventarioClient({ products, role }: { products: Product[]; role
     const { toast } = useToast();
 
     const filtered = products.filter((p) => {
-        const matchSearch = p.name.toLowerCase().includes(search.toLowerCase());
+        const term = search.toLowerCase();
+        const matchSearch = p.name.toLowerCase().includes(term) || (p.sku && p.sku.toLowerCase().includes(term));
         const matchFilter = filter === "Todos" || p.category === filter;
         return matchSearch && matchFilter;
     });
@@ -47,6 +49,7 @@ export function InventarioClient({ products, role }: { products: Product[]; role
     function openEdit(product: Product) {
         setForm({
             name: product.name,
+            sku: product.sku ?? "",
             category: product.category,
             price: product.price,
             cost: product.cost,
@@ -177,7 +180,12 @@ export function InventarioClient({ products, role }: { products: Product[]; role
                                                         <Package className="h-4 w-4" style={{ color: product.color }} />
                                                     </div>
                                                 </div>
-                                                <span className="font-medium">{product.name}</span>
+                                                <div>
+                                                    <span className="font-medium">{product.name}</span>
+                                                    {product.sku && (
+                                                        <span className="ml-2 text-xs text-foreground/40">{product.sku}</span>
+                                                    )}
+                                                </div>
                                             </div>
                                         </td>
                                         <td className="px-4 py-3 text-foreground/60">{product.category}</td>
@@ -246,6 +254,10 @@ export function InventarioClient({ products, role }: { products: Product[]; role
                                 <div>
                                     <label className="mb-1 block text-xs font-medium text-foreground/60">Nome</label>
                                     <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
+                                </div>
+                                <div>
+                                    <label className="mb-1 block text-xs font-medium text-foreground/60">SKU (código)</label>
+                                    <Input value={form.sku} onChange={(e) => setForm({ ...form, sku: e.target.value })} placeholder="Ex: CAD-001" />
                                 </div>
                                 <div className="grid grid-cols-2 gap-4">
                                     <div>

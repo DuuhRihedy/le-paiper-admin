@@ -1,21 +1,24 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { getToken } from "next-auth/jwt";
+import { hasRouteAccess, getHomePage, type UserRole } from "@/lib/permissions";
 
-export function middleware(req: NextRequest) {
+export async function middleware(req: NextRequest) {
     const { pathname } = req.nextUrl;
 
-    // Allow auth API routes
+    // Permitir rotas de API do auth
     if (pathname.startsWith("/api/auth")) return NextResponse.next();
 
-    // Public routes
+    // Rotas públicas
     const publicRoutes = ["/login"];
     const isPublicRoute = publicRoutes.some((route) => pathname.startsWith(route));
 
-    // Check for NextAuth session token (works with JWT strategy)
-    const token =
-        req.cookies.get("authjs.session-token")?.value ||
-        req.cookies.get("__Secure-authjs.session-token")?.value;
-
+    // Decodificar JWT para obter sessão e role
+    const token = await getToken({
+        req,
+        secret: process.env.AUTH_SECRET,
+        secureCookie: req.nextUrl.protocol === "https:",
+    });
     const isLoggedIn = !!token;
 
     if (!isLoggedIn && !isPublicRoute) {
@@ -23,7 +26,16 @@ export function middleware(req: NextRequest) {
     }
 
     if (isLoggedIn && isPublicRoute) {
-        return NextResponse.redirect(new URL("/", req.url));
+        const role = (token.role as UserRole) ?? "admin";
+        return NextResponse.redirect(new URL(getHomePage(role), req.url));
+    }
+
+    // Verificar permissão de rota por role
+    if (isLoggedIn && !isPublicRoute) {
+        const role = (token.role as UserRole) ?? "admin";
+        if (!hasRouteAccess(role, pathname)) {
+            return NextResponse.redirect(new URL(getHomePage(role), req.url));
+        }
     }
 
     return NextResponse.next();

@@ -15,7 +15,8 @@ export async function getDashboardData() {
         include: { items: true },
     });
 
-    const revenue = salesLast30.reduce((acc, s) => acc + s.total, 0);
+    let revenue = 0;
+    for (const s of salesLast30) revenue += s.total;
     const totalSales = salesLast30.length;
     const avgTicket = totalSales > 0 ? revenue / totalSales : 0;
 
@@ -36,7 +37,7 @@ export async function getDashboardData() {
     // For more accurate filtering, we post-filter products where stock <= minStock
     // SQLite doesn't support column-to-column comparison in WHERE easily with Prisma,
     // so we fetch a reasonable set and then filter
-    const lowStockFiltered = lowStock.filter((p) => p.stock <= p.minStock);
+    const lowStockFiltered = lowStock.filter((p: { stock: number; minStock: number }) => p.stock <= p.minStock);
 
     // If we didn't get enough, fetch more with a broader scope
     let finalLowStock = lowStockFiltered;
@@ -47,7 +48,7 @@ export async function getDashboardData() {
             take: 20,
         });
         finalLowStock = allLowish
-            .filter((p) => p.stock <= p.minStock)
+            .filter((p: { stock: number; minStock: number }) => p.stock <= p.minStock)
             .slice(0, 5);
     }
 

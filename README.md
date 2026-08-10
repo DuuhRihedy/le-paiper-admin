@@ -1,64 +1,57 @@
-# 📊 Le Paiper Admin
+# 📊 Le Paiper Admin — ERP & Gestão Comercial (PDV)
 
-Painel administrativo completo desenvolvido para gestão de dados e visualização analítica, com foco em segurança e UX avançada.
+Sistema ERP e Painel Administrativo de Ponto de Venda (PDV) desenvolvido para a gestão operacional e financeira do estabelecimento **Le Paiper** (papelaria e serviços gráficos).
 
-<div align="center">
-  <img src="https://raw.githubusercontent.com/DuuhRihedy/DuuhRihedy/main/assets/lepaiper-placeholder.png" alt="Le Paiper Admin Demo" width="800">
-</div>
+![Status](https://img.shields.io/badge/Status-Em_Desenvolvimento-yellow?style=flat-square)
+![Next.js](https://img.shields.io/badge/Next.js-16.1-black?style=flat-square&logo=nextdotjs)
+![React](https://img.shields.io/badge/React-19-blue?style=flat-square&logo=react)
+![Prisma](https://img.shields.io/badge/Prisma-6.19-2D3748?style=flat-square&logo=prisma)
+![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-v4-38B2AC?style=flat-square&logo=tailwind-css)
+![Next-Auth](https://img.shields.io/badge/Next_Auth-v5-purple?style=flat-square)
 
-<br>
+---
 
-<div align="center">
-  ![Status](https://img.shields.io/badge/Status-Em%20Desenvolvimento-yellow?style=flat-square)
-  ![Next.js](https://img.shields.io/badge/Next.js-000000?style=flat-square&logo=nextdotjs&logoColor=white)
-  ![Prisma](https://img.shields.io/badge/Prisma-2D3748?style=flat-square&logo=prisma&logoColor=white)
-</div>
+## 🎯 Sobre o Projeto
 
-## 🚀 Features
+O **Le Paiper Admin** é a solução central para controle de caixa, vendas e estoque do Le Paiper. O sistema simplifica o atendimento no balcão através de um módulo de PDV ágil, além de fornecer aos gestores métricas detalhadas sobre faturamento, curva de produtos mais vendidos e cadastro de clientes.
 
-- ✅ **Dashboard Analítico:** Visualização de dados interativa com `Recharts`.
-- ✅ **Autenticação:** Proteção de rotas e sessões gerenciadas pelo `Next-Auth` (v5).
-- ✅ **Interface Moderna:** Componentes acessíveis com `Radix UI` e estilizados com `Tailwind CSS`.
-- ✅ **Animações Fluidas:** Microinterações utilizando `Framer Motion`.
-- ✅ **Gestão de Banco de Dados:** ORM `Prisma` para consultas tipadas e seguras.
+---
 
-## 🛠️ Tech Stack
+## ✨ Funcionalidades Principais
 
-### Frontend & UI
-![React](https://img.shields.io/badge/React-20232A?style=flat-square&logo=react&logoColor=61DAFB)
-![Next.js](https://img.shields.io/badge/Next.js-000000?style=flat-square&logo=nextdotjs&logoColor=white)
-![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=flat-square&logo=tailwind-css&logoColor=white)
-![Framer Motion](https://img.shields.io/badge/Framer_Motion-0055FF?style=flat-square&logo=framer&logoColor=white)
+- 🛒 **Ponto de Venda - PDV (`/pdv`):** Interface otimizada para registro rápido de vendas, seleção de produtos, aplicação de descontos e emissão de comprovantes.
+- 📦 **Controle de Inventário & Estoque (`/inventario`):** Gestão de entradas, saídas, alertas de produtos com estoque baixo e precificação.
+- 👥 **Gestão de Clientes (`/clientes`):** Base de dados de clientes com histórico de compras e informações de contato.
+- 📈 **Relatórios & Analytics (`/relatorios`):** Gráficos interativos construídos com `Recharts` para análise de faturamento diário, mensal e desempenho por categoria.
+- 🔒 **Autenticação & Permissões:** Controle de acesso seguro por rotas via `Next-Auth` (v5) e senhas criptografadas com `bcryptjs`.
 
-### Backend & Segurança
-![Node.js](https://img.shields.io/badge/Node.js-339933?style=flat-square&logo=nodedotjs&logoColor=white)
-![Next-Auth](https://img.shields.io/badge/Next_Auth-000000?style=flat-square)
-![Prisma](https://img.shields.io/badge/Prisma-2D3748?style=flat-square&logo=prisma&logoColor=white)
+---
 
-## ⚡ Quick Start
+## 🛠️ Tecnologias Utilizadas
 
-### Pré-requisitos
-- Node.js (v20+)
-- Banco de Dados (PostgreSQL/MySQL configurado)
+- **Frontend:** Next.js 16 (App Router), React 19, TypeScript
+- **Componentes & Estilização:** Radix UI (`@radix-ui/react-dialog`, `@radix-ui/react-select`), Tailwind CSS v4, Lucide Icons
+- **Visualização de Dados & Animações:** Recharts, Framer Motion
+- **Backend & Database:** Node.js, Prisma ORM, PostgreSQL
 
-### Instalação
+---
 
-1. Clone e instale
+## 🚀 Como Executar o Projeto Localmente
+
 ```bash
+# 1. Clone o repositório
 git clone https://github.com/DuuhRihedy/le-paiper-admin.git
 cd le-paiper-admin
-npm install
-```
 
-2. Configure o Banco
-Crie o `.env` e rode as migrations:
-```bash
+# 2. Instale as dependências
+npm install
+
+# 3. Execute as migrações do banco de dados e populares dados (seed)
 npx prisma generate
 npm run db:seed
-```
 
-3. Inicie
-```bash
+# 4. Inicie o servidor
 npm run dev
 ```
-Acesse `http://localhost:3000`.
+
+Acesse em `http://localhost:3000`.

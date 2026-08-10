@@ -1,78 +1,64 @@
-# Le Paiper Admin 📦
+# 📊 Le Paiper Admin
 
-Painel administrativo premium para a papelaria **Le Paiper** — construído com Next.js 16, Tailwind CSS v4 e Framer Motion.
+Painel administrativo completo desenvolvido para gestão de dados e visualização analítica, com foco em segurança e UX avançada.
 
-## ✨ Features
+<div align="center">
+  <img src="https://raw.githubusercontent.com/DuuhRihedy/DuuhRihedy/main/assets/lepaiper-placeholder.png" alt="Le Paiper Admin Demo" width="800">
+</div>
 
-| Tela | Descrição |
-|------|-----------|
-| **Dashboard** | KPIs de vendas, receita e alertas de estoque baixo |
-| **Inventário** | CRUD de produtos com categorias, cores e níveis de estoque |
-| **PDV** | Ponto de venda com carrinho, busca e múltiplos métodos de pagamento |
-| **Clientes** | Gestão de clientes com tiers de fidelidade (Bronze/Prata/Ouro) |
-| **Relatórios** | Gráficos de receita, vendas por categoria, métodos de pagamento e top produtos |
-| **Configurações** | Perfil, dados da loja, notificações, aparência e segurança |
-| **Login** | Tela de autenticação com glassmorphism e animações |
+<br>
 
-### Extras
-- 🌙 **Dark Mode** — toggle com persistência e detecção do sistema
-- 🔔 **Notificações** — dropdown animado com badge de contagem
-- 🍞 **Toasts** — feedback visual em 4 variantes (success/error/warning/info)
-- 💀 **Skeletons** — loading states durante transições de rota
-- 🚫 **404** — página customizada com animações
+<div align="center">
+  ![Status](https://img.shields.io/badge/Status-Em%20Desenvolvimento-yellow?style=flat-square)
+  ![Next.js](https://img.shields.io/badge/Next.js-000000?style=flat-square&logo=nextdotjs&logoColor=white)
+  ![Prisma](https://img.shields.io/badge/Prisma-2D3748?style=flat-square&logo=prisma&logoColor=white)
+</div>
 
-## 🛠 Tech Stack
+## 🚀 Features
 
-- **Framework**: [Next.js 16](https://nextjs.org/) (App Router + Turbopack)
-- **Styling**: [Tailwind CSS v4](https://tailwindcss.com/) + CSS Variables semânticas
-- **Animações**: [Framer Motion](https://www.framer.com/motion/)
-- **Charts**: [Recharts](https://recharts.org/)
-- **Components**: Radix UI primitives
-- **Icons**: [Lucide React](https://lucide.dev/)
+- ✅ **Dashboard Analítico:** Visualização de dados interativa com `Recharts`.
+- ✅ **Autenticação:** Proteção de rotas e sessões gerenciadas pelo `Next-Auth` (v5).
+- ✅ **Interface Moderna:** Componentes acessíveis com `Radix UI` e estilizados com `Tailwind CSS`.
+- ✅ **Animações Fluidas:** Microinterações utilizando `Framer Motion`.
+- ✅ **Gestão de Banco de Dados:** ORM `Prisma` para consultas tipadas e seguras.
 
-## 🚀 Getting Started
+## 🛠️ Tech Stack
 
+### Frontend & UI
+![React](https://img.shields.io/badge/React-20232A?style=flat-square&logo=react&logoColor=61DAFB)
+![Next.js](https://img.shields.io/badge/Next.js-000000?style=flat-square&logo=nextdotjs&logoColor=white)
+![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=flat-square&logo=tailwind-css&logoColor=white)
+![Framer Motion](https://img.shields.io/badge/Framer_Motion-0055FF?style=flat-square&logo=framer&logoColor=white)
+
+### Backend & Segurança
+![Node.js](https://img.shields.io/badge/Node.js-339933?style=flat-square&logo=nodedotjs&logoColor=white)
+![Next-Auth](https://img.shields.io/badge/Next_Auth-000000?style=flat-square)
+![Prisma](https://img.shields.io/badge/Prisma-2D3748?style=flat-square&logo=prisma&logoColor=white)
+
+## ⚡ Quick Start
+
+### Pré-requisitos
+- Node.js (v20+)
+- Banco de Dados (PostgreSQL/MySQL configurado)
+
+### Instalação
+
+1. Clone e instale
 ```bash
-# Instalar dependências
+git clone https://github.com/DuuhRihedy/le-paiper-admin.git
+cd le-paiper-admin
 npm install
+```
 
-# Rodar em desenvolvimento
+2. Configure o Banco
+Crie o `.env` e rode as migrations:
+```bash
+npx prisma generate
+npm run db:seed
+```
+
+3. Inicie
+```bash
 npm run dev
-
-# Build de produção
-npm run build
 ```
-
-Acesse [http://localhost:3000](http://localhost:3000) após `npm run dev`.
-
-## 📁 Estrutura
-
-```
-src/
-├── app/
-│   ├── page.tsx              # Dashboard
-│   ├── inventario/page.tsx   # Inventário
-│   ├── pdv/page.tsx          # Ponto de Venda
-│   ├── clientes/page.tsx     # Clientes
-│   ├── relatorios/page.tsx   # Relatórios
-│   ├── configuracoes/page.tsx # Configurações
-│   ├── login/page.tsx        # Login
-│   ├── not-found.tsx         # 404
-│   ├── loading.tsx           # Loading skeleton
-│   ├── layout.tsx            # Root layout
-│   └── globals.css           # Design tokens
-├── components/
-│   ├── layout/
-│   │   ├── sidebar.tsx       # Navegação lateral
-│   │   ├── header.tsx        # Topbar com breadcrumb
-│   │   └── dashboard-layout.tsx
-│   ├── ui/                   # Componentes base (Button, Card, Input, etc.)
-│   ├── theme-provider.tsx    # Dark mode context
-│   └── theme-toggle.tsx      # Toggle animado
-└── lib/
-    └── cn.ts                 # Utility classnames
-```
-
-## 📝 License
-
-MIT
+Acesse `http://localhost:3000`.
